@@ -214,9 +214,10 @@
     /* ── MODAL BASE ── */
     .modal {
       position: fixed; inset: 0; z-index: 200;
-      background: linear-gradient(160deg,rgba(3,6,14,0.98),rgba(7,14,30,0.97));
+      background: linear-gradient(160deg,rgba(3,6,14,0.92),rgba(7,14,30,0.90));
       display: none; flex-direction: column; align-items: center;
       justify-content: center; color: white; direction: rtl;
+      overflow-y: auto;
     }
     .modal.active { display: flex; }
     .modal::before {
@@ -430,6 +431,44 @@
 
     /* finish overlay — kept hidden, replaced by level overlay */
     #finish-overlay { display: none; }
+
+    /* ── CHARACTER SELECT ── */
+    .char-grid { display:flex; gap:12px; margin-bottom:22px; flex-wrap:wrap; justify-content:center; }
+    .char-card {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 3px; padding: 16px 12px; text-align: center; cursor: pointer;
+      transition: all 0.22s; width: 100px; position: relative; overflow: hidden;
+    }
+    .char-card:hover, .char-card.selected {
+      border-color: rgba(212,160,23,0.55); background: rgba(212,160,23,0.07);
+      transform: translateY(-4px); box-shadow: 0 10px 28px rgba(0,0,0,0.55), 0 0 20px rgba(212,160,23,0.15);
+    }
+    .char-card.selected::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:2px;
+      background: linear-gradient(90deg,transparent,var(--gold),transparent);
+    }
+    .char-icon { font-size:38px; margin-bottom:6px; }
+    .breed-swatch {
+      display: flex; width: 52px; height: 52px; margin: 0 auto 8px;
+      border-radius: 4px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .char-name { font-family:'Oswald',sans-serif; font-size:16px; font-weight:700; letter-spacing:1px; color:#fff; }
+    .char-desc { font-size:11px; color:rgba(255,255,255,0.38); margin-top:4px; line-height:1.4; }
+
+    .acc-card {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 3px; padding: 10px 14px; text-align: center; cursor: pointer;
+      transition: all 0.2s; min-width: 72px;
+    }
+    .acc-card:hover, .acc-card.selected {
+      border-color: rgba(212,160,23,0.55); background: rgba(212,160,23,0.07);
+      transform: translateY(-3px);
+    }
+    .acc-label { font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:1px; color:rgba(255,255,255,0.6); margin-top:4px; }
+
+    input:focus { border-color: var(--gold) !important; }
   </style>
 </head>
 <body>
@@ -442,12 +481,77 @@
     <div class="hud-label">שלב</div>
     <div class="hud-value gold-text" id="level-indicator-value">1</div>
   </div>
-  <!-- timer is separate centred element -->
-  <div class="hud-panel" style="opacity:0;pointer-events:none;">
-    <div class="hud-label">‌</div><div class="hud-value">‌</div>
+  <div class="hud-panel" id="dog-name-panel" style="opacity:0;pointer-events:none;transition:opacity 0.4s;">
+    <div class="hud-label">כלב</div>
+    <div class="hud-value" id="dog-name-hud" style="font-size:20px;letter-spacing:2px;">—</div>
   </div>
 </div>
-<div id="level-indicator"></div><!-- dummy for JS refs -->
+<div id="level-indicator"></div>
+
+<!-- CHARACTER SELECT MODAL -->
+<div id="char-select" class="modal active">
+  <div style="font-family:'Oswald';font-size:10px;letter-spacing:4px;color:rgba(212,160,23,0.7);text-transform:uppercase;margin-bottom:6px;">CoolDog</div>
+  <h2>אג׳יליטי כלבני</h2>
+  <div class="subtitle">AGILITY CHAMPIONSHIP SERIES</div>
+  <div class="gold-line"></div>
+
+  <!-- Breed selection -->
+  <p style="font-family:'Oswald';font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.45);margin-bottom:14px;">בחר גזע</p>
+  <div class="char-grid">
+    <div class="char-card selected" id="breed-bc" onclick="selectBreed('bc')">
+      <div class="breed-swatch">
+        <div style="background:#111111;width:50%;height:100%;border-radius:3px 0 0 3px;"></div>
+        <div style="background:#efefef;width:50%;height:100%;border-radius:0 3px 3px 0;"></div>
+      </div>
+      <div class="char-name">בורדר קולי</div>
+      <div class="char-desc">שחור-לבן<br>קלאסי</div>
+    </div>
+    <div class="char-card" id="breed-merle" onclick="selectBreed('merle')">
+      <div class="breed-swatch">
+        <div style="background:#7a9db5;width:50%;height:100%;border-radius:3px 0 0 3px;"></div>
+        <div style="background:#dce8ef;width:50%;height:100%;border-radius:0 3px 3px 0;"></div>
+      </div>
+      <div class="char-name">מרל</div>
+      <div class="char-desc">כחול-אפור<br>מנומר</div>
+    </div>
+    <div class="char-card" id="breed-brown" onclick="selectBreed('brown')">
+      <div class="breed-swatch">
+        <div style="background:#6b3718;width:50%;height:100%;border-radius:3px 0 0 3px;"></div>
+        <div style="background:#f0d090;width:50%;height:100%;border-radius:0 3px 3px 0;"></div>
+      </div>
+      <div class="char-name">חום-לבן</div>
+      <div class="char-desc">גוון חום<br>חם</div>
+    </div>
+  </div>
+
+  <!-- Dog name -->
+  <p style="font-family:'Oswald';font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.45);margin-bottom:8px;">שם הכלב</p>
+  <input type="text" id="dog-name-input" placeholder="מקס / לונה / ריו..." maxlength="12"
+    style="font-family:'Oswald';font-size:18px;letter-spacing:3px;padding:10px 20px;border-radius:2px;text-align:center;margin-bottom:18px;width:220px;background:rgba(255,255,255,0.06);color:white;border:1px solid rgba(212,160,23,0.3);outline:none;direction:rtl;">
+
+  <!-- Accessory selection -->
+  <p style="font-family:'Oswald';font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.45);margin-bottom:10px;">אקססוריז</p>
+  <div style="display:flex;gap:10px;justify-content:center;margin-bottom:22px;flex-wrap:wrap;">
+    <div class="acc-card selected" id="acc-none" onclick="selectAcc('none')">
+      <div style="font-size:24px;">🐕</div>
+      <div class="acc-label">ללא</div>
+    </div>
+    <div class="acc-card" id="acc-bandana-red" onclick="selectAcc('bandana-red')">
+      <div style="font-size:24px;">🔴</div>
+      <div class="acc-label">בנדנה אדום</div>
+    </div>
+    <div class="acc-card" id="acc-bandana-blue" onclick="selectAcc('bandana-blue')">
+      <div style="font-size:24px;">🔵</div>
+      <div class="acc-label">בנדנה כחול</div>
+    </div>
+    <div class="acc-card" id="acc-bandana-gold" onclick="selectAcc('bandana-gold')">
+      <div style="font-size:24px;">🟡</div>
+      <div class="acc-label">בנדנה זהב</div>
+    </div>
+  </div>
+
+  <button class="btn" onclick="startGame()">🐾 יאללה לרוץ!</button>
+</div>
 
 <!-- Centred competition timer -->
 <div id="timer-display">
@@ -2112,6 +2216,7 @@ function checkStartLine(playerPos, now) {
 const MAT = {
   black: new THREE.MeshLambertMaterial({ color: 0x111111 }),
   white: new THREE.MeshLambertMaterial({ color: 0xefefef }),
+  accent: new THREE.MeshLambertMaterial({ color: 0x111111 }), // ears, tail — same as black for BC
   nose:  new THREE.MeshLambertMaterial({ color: 0x0d0d0d }),
   eye:   new THREE.MeshLambertMaterial({ color: 0x3b2314 }),
   eyeW:  new THREE.MeshLambertMaterial({ color: 0xffffff }),
@@ -2173,7 +2278,7 @@ makeEye(-1); makeEye(1);
 
 // Ears
 function makeEar(side) {
-  const ear = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.18, 0.08), MAT.black);
+  const ear = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.18, 0.08), MAT.accent);
   ear.position.set(side * 0.18, 0.21, 0.02);
   ear.rotation.z = side * 0.25;
   headGroup.add(ear);
@@ -2185,7 +2290,7 @@ const tailGroup = new THREE.Group();
 tailGroup.position.set(0, 0.1, 0.5);
 body.add(tailGroup);
 
-const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.025, 0.55, 6), MAT.black);
+const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.025, 0.55, 6), MAT.accent);
 tail.rotation.x = -0.7;
 tail.position.y = 0.22;
 tail.castShadow = true;
@@ -2352,6 +2457,61 @@ let legTime  = 0;
 let wagTime  = 0;
 let prevJump = false;
 
+// ── Handler (human running alongside) ────────
+const handlerGroup = new THREE.Group();
+const hMats = {
+  shirt: new THREE.MeshLambertMaterial({ color: 0x1a5a2a }),
+  pants: new THREE.MeshLambertMaterial({ color: 0x222244 }),
+  skin:  new THREE.MeshLambertMaterial({ color: 0xf0c090 }),
+  shoes: new THREE.MeshLambertMaterial({ color: 0x222222 }),
+  hair:  new THREE.MeshLambertMaterial({ color: 0x3b1f0a }),
+};
+const hTorso = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.46, 0.22), hMats.shirt);
+hTorso.position.set(0, 1.12, 0); handlerGroup.add(hTorso);
+const hHead = new THREE.Mesh(new THREE.BoxGeometry(0.23, 0.23, 0.22), hMats.skin);
+hHead.position.set(0, 1.56, 0); handlerGroup.add(hHead);
+const hHair = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.1, 0.23), hMats.hair);
+hHair.position.set(0, 1.69, 0); handlerGroup.add(hHair);
+const hArmL = new THREE.Group(); hArmL.position.set(-0.22, 1.28, 0); handlerGroup.add(hArmL);
+const hArmR = new THREE.Group(); hArmR.position.set( 0.22, 1.28, 0); handlerGroup.add(hArmR);
+[hArmL, hArmR].forEach(g => {
+  const upper = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.3, 0.1), hMats.shirt);
+  upper.position.set(0, -0.15, 0); g.add(upper);
+  const lower = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.26, 0.09), hMats.skin);
+  lower.position.set(0, -0.42, 0); g.add(lower);
+});
+const hLegL = new THREE.Group(); hLegL.position.set(-0.09, 0.88, 0); handlerGroup.add(hLegL);
+const hLegR = new THREE.Group(); hLegR.position.set( 0.09, 0.88, 0); handlerGroup.add(hLegR);
+[hLegL, hLegR].forEach(g => {
+  const upper = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.4, 0.13), hMats.pants);
+  upper.position.set(0, -0.2, 0); g.add(upper);
+  const lower = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.38, 0.11), hMats.pants);
+  lower.position.set(0, -0.58, 0); g.add(lower);
+  const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.08, 0.2), hMats.shoes);
+  shoe.position.set(0, -0.79, 0.03); g.add(shoe);
+});
+handlerGroup.position.set(-3.5, 0, 0);
+scene.add(handlerGroup);
+let handlerLegTime = 0;
+
+function updateHandler(dt, dogPos, dogMoving) {
+  const targetX = dogPos.x - 3.8;
+  const targetZ = dogPos.z;
+  const lerpK = Math.min(1, 5 * dt);
+  handlerGroup.position.x += (targetX - handlerGroup.position.x) * lerpK;
+  handlerGroup.position.z += (targetZ - handlerGroup.position.z) * lerpK;
+  const dz = targetZ - handlerGroup.position.z;
+  if (Math.abs(dz) > 0.02) handlerGroup.rotation.y = dz > 0 ? 0 : Math.PI;
+  const runSpeed = dogMoving ? 7 : 1.5;
+  handlerLegTime += dt * runSpeed;
+  const legSwing = dogMoving ? 0.55 : 0.05;
+  const armSwing = dogMoving ? 0.40 : 0.04;
+  hLegL.rotation.x =  Math.sin(handlerLegTime)           * legSwing;
+  hLegR.rotation.x =  Math.sin(handlerLegTime + Math.PI) * legSwing;
+  hArmL.rotation.x =  Math.sin(handlerLegTime + Math.PI) * armSwing;
+  hArmR.rotation.x =  Math.sin(handlerLegTime)           * armSwing;
+}
+
 // ── Main loop ─────────────────────────────────
 const clock = new THREE.Clock();
 
@@ -2476,6 +2636,7 @@ function animate() {
   updatePathLines();
   tickCrowdWaves(nowMs);
   updateSeesawTilt();
+  updateHandler(dt, player.pos, moving);
 
   // ══ 7. ANIMATION ══════════════════════════════
   const isAir = !player.isGrounded;
@@ -3044,14 +3205,83 @@ function startLevel(levelIndex) {
   showLevelStart(levelIndex);
 }
 
-// ── Boot: show level 1 start screen ───────────
+// ── Character select state ────────────────────
+let selectedBreed = 'bc';
+let selectedAcc   = 'none';
+
+const BREEDS = {
+  bc:    { primary: 0x111111, secondary: 0xefefef, accent: 0x111111, label: 'בורדר קולי' },
+  merle: { primary: 0x7a9db5, secondary: 0xdce8ef, accent: 0x3a6070, label: 'מרל'        },
+  brown: { primary: 0x6b3718, secondary: 0xf0d090, accent: 0x3d1a08, label: 'חום-לבן'    },
+};
+
+const ACC_COLORS = {
+  'none':          null,
+  'bandana-red':   0xcc2200,
+  'bandana-blue':  0x1a4ebf,
+  'bandana-gold':  0xd4a017,
+};
+
+function selectBreed(breed) {
+  selectedBreed = breed;
+  document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('breed-' + breed).classList.add('selected');
+  applyBreed(breed);
+}
+
+function selectAcc(acc) {
+  selectedAcc = acc;
+  document.querySelectorAll('.acc-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('acc-' + acc).classList.add('selected');
+  applyAccessory(acc);
+}
+
+function applyBreed(breed) {
+  const b = BREEDS[breed] || BREEDS.bc;
+  MAT.black.color.setHex(b.primary);   MAT.black.needsUpdate = true;
+  MAT.white.color.setHex(b.secondary); MAT.white.needsUpdate = true;
+  MAT.accent.color.setHex(b.accent);   MAT.accent.needsUpdate = true;
+}
+
+let bandanaMesh = null;
+function applyAccessory(acc) {
+  if (bandanaMesh) { collar.remove(bandanaMesh); bandanaMesh = null; }
+  const col = ACC_COLORS[acc];
+  if (!col) return;
+  const mat = new THREE.MeshLambertMaterial({ color: col, side: THREE.DoubleSide });
+  const geo = new THREE.BufferGeometry();
+  const v = new Float32Array([
+    -0.22,  0.0,   0.0,
+     0.22,  0.0,   0.0,
+     0.0,  -0.28, -0.12,
+  ]);
+  geo.setAttribute('position', new THREE.BufferAttribute(v, 3));
+  geo.setIndex(new THREE.BufferAttribute(new Uint16Array([0,1,2, 0,2,1]), 1));
+  geo.computeVertexNormals();
+  bandanaMesh = new THREE.Mesh(geo, mat);
+  bandanaMesh.position.set(0, -0.05, -0.08);
+  collar.add(bandanaMesh);
+}
+
+function startGame() {
+  const dogName = document.getElementById('dog-name-input').value.trim() || 'בורדר';
+  applyBreed(selectedBreed);
+  applyAccessory(selectedAcc);
+  document.getElementById('dog-name-hud').textContent = dogName;
+  document.getElementById('dog-name-panel').style.opacity = '1';
+  document.getElementById('char-select').classList.remove('active');
+  showLevelStart(0);
+}
+
+// ── Boot ──────────────────────────────────────
 buildLevel(0);
 buildPips(courseObstacles.length);
 obsLastTrigger = new Array(courseObstacles.length).fill(0);
 resetPlayerToSpawn();
-showLevelStart(0);
-
+applyBreed('bc');
 animate();
+
+
 </script>
 </body>
 </html>
