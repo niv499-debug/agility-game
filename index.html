@@ -352,6 +352,115 @@
     #level-btn-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 6px; }
     #level-card.championship #level-title { font-size: 1.6rem; }
 
+    /* ── FINISH SCREEN ── */
+    #finish-screen {
+      display: none; position: fixed; inset: 0; z-index: 250;
+      background: linear-gradient(160deg,rgba(3,6,14,0.97),rgba(7,14,30,0.97));
+      flex-direction: column; align-items: center; justify-content: center;
+      direction: rtl; overflow-y: auto; padding: 20px 0;
+    }
+    #finish-screen.visible { display: flex; }
+    #finish-screen::before {
+      content:''; position:absolute; inset:0; pointer-events:none;
+      background: radial-gradient(ellipse 70% 45% at 50% 0%, rgba(212,160,23,0.12) 0%, transparent 60%),
+                  radial-gradient(ellipse 40% 30% at 20% 100%, rgba(26,106,191,0.07) 0%, transparent 55%);
+    }
+    #finish-card {
+      background: linear-gradient(160deg,rgba(8,14,28,0.95),rgba(4,8,18,0.95));
+      border: 1px solid rgba(212,160,23,0.5); border-radius: 3px;
+      padding: 36px 48px; text-align: center; max-width: 500px; width: 92vw;
+      box-shadow: 0 16px 80px rgba(0,0,0,0.7), 0 0 60px rgba(212,160,23,0.08);
+      position: relative; overflow: hidden; z-index: 1;
+    }
+    #finish-card::before {
+      content:''; position:absolute; top:0; right:0; left:0; height:2px;
+      background: linear-gradient(90deg,transparent,var(--gold),transparent);
+    }
+    #finish-trophy { font-size: 3.5rem; margin-bottom: 6px; animation: trophyPop 0.6s cubic-bezier(0.175,0.885,0.32,1.275) both; }
+    @keyframes trophyPop { from { transform: scale(0.3) rotate(-20deg); opacity:0; } to { transform: scale(1) rotate(0); opacity:1; } }
+    #finish-badge {
+      font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:4px;
+      text-transform:uppercase; color:rgba(212,160,23,0.7); margin-bottom:6px;
+    }
+    #finish-title {
+      font-family:'Oswald',sans-serif; font-size:2.6rem; font-weight:700;
+      color: var(--gold); letter-spacing:0.06em; margin-bottom:2px;
+      text-shadow: 0 0 40px rgba(212,160,23,0.5);
+    }
+    #finish-subtitle {
+      font-family:'Rubik',sans-serif; font-size:0.88rem;
+      color:rgba(255,255,255,0.45); margin-bottom:20px;
+    }
+    #finish-time-big {
+      font-family:'Oswald',sans-serif; font-size:3.6rem; font-weight:700;
+      color:#fff; letter-spacing:0.04em; line-height:1;
+      text-shadow: 0 2px 20px rgba(212,160,23,0.6); margin-bottom:4px;
+    }
+    #finish-time-label {
+      font-family:'Oswald',sans-serif; font-size:9px; letter-spacing:4px;
+      text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:6px;
+    }
+    #finish-stars { font-size:1.8rem; letter-spacing:0.1em; margin-bottom:6px; }
+    #finish-newbest {
+      font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:3px;
+      color: var(--gold); text-transform:uppercase; margin-bottom:18px;
+      opacity:0; transition: opacity 0.4s;
+    }
+    #finish-newbest.show { opacity:1; }
+    .finish-divider {
+      width:100%; height:1px; margin:18px 0;
+      background:linear-gradient(90deg,transparent,rgba(212,160,23,0.25),transparent);
+    }
+    #finish-name-row {
+      display:flex; gap:8px; align-items:center; justify-content:center; margin-bottom:16px;
+    }
+    #finish-name-input {
+      font-family:'Oswald',sans-serif; font-size:16px; letter-spacing:2px;
+      padding:10px 16px; border-radius:2px; width:180px;
+      background:rgba(255,255,255,0.06); color:white;
+      border:1px solid rgba(212,160,23,0.3); outline:none; text-align:right;
+      transition: border-color 0.2s;
+    }
+    #finish-name-input:focus { border-color:var(--gold); }
+    #finish-save-btn {
+      font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:2px;
+      padding:10px 18px; border-radius:2px; cursor:pointer; text-transform:uppercase;
+      background:linear-gradient(135deg,#1a5a2a,#0d3a1a);
+      color:var(--gold); border:1px solid rgba(212,160,23,0.42);
+      transition: all 0.2s; white-space:nowrap;
+    }
+    #finish-save-btn:hover { box-shadow:0 0 16px rgba(212,160,23,0.3); }
+    #finish-save-btn:disabled { opacity:0.4; cursor:default; }
+    #finish-leaderboard {
+      width:100%; max-width:360px; margin:0 auto 18px;
+      background:rgba(0,0,0,0.35); border:1px solid rgba(212,160,23,0.15);
+      border-radius:2px; overflow:hidden;
+    }
+    #finish-leaderboard h3 {
+      font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:3px;
+      color:var(--gold); text-align:center; padding:10px 0 8px;
+      text-transform:uppercase; border-bottom:1px solid rgba(212,160,23,0.12);
+    }
+    .lb-row {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:8px 16px; border-bottom:1px solid rgba(255,255,255,0.04);
+      font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:1px;
+    }
+    .lb-row:last-child { border-bottom:none; }
+    .lb-rank { color:rgba(212,160,23,0.7); width:24px; }
+    .lb-name { color:#fff; flex:1; text-align:right; padding:0 8px; }
+    .lb-time { color:rgba(255,255,255,0.55); font-size:12px; }
+    .lb-row.highlight { background:rgba(212,160,23,0.08); }
+    .lb-row.highlight .lb-name { color:var(--gold); }
+    #finish-btn-row { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+
+    /* Confetti canvas */
+    #confetti-canvas {
+      position:fixed; inset:0; pointer-events:none; z-index:249;
+      display:none;
+    }
+    #confetti-canvas.visible { display:block; }
+
     /* ── PAUSE OVERLAY ── */
     #pause-overlay {
       display: none; position: fixed; inset: 0;
@@ -481,10 +590,6 @@
     <div class="hud-label">שלב</div>
     <div class="hud-value gold-text" id="level-indicator-value">1</div>
   </div>
-  <div class="hud-panel" id="dog-name-panel" style="opacity:0;pointer-events:none;transition:opacity 0.4s;">
-    <div class="hud-label">כלב</div>
-    <div class="hud-value" id="dog-name-hud" style="font-size:20px;letter-spacing:2px;">—</div>
-  </div>
 </div>
 <div id="level-indicator"></div>
 
@@ -495,58 +600,33 @@
   <div class="subtitle">AGILITY CHAMPIONSHIP SERIES</div>
   <div class="gold-line"></div>
 
-  <!-- Breed selection -->
-  <p style="font-family:'Oswald';font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.45);margin-bottom:14px;">בחר גזע</p>
+  <!-- Dog selection -->
+  <p style="font-family:'Oswald';font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.45);margin-bottom:14px;">בחר כלב</p>
   <div class="char-grid">
-    <div class="char-card selected" id="breed-bc" onclick="selectBreed('bc')">
+    <div class="char-card" id="breed-colin" onclick="selectBreed('colin')">
       <div class="breed-swatch">
-        <div style="background:#111111;width:50%;height:100%;border-radius:3px 0 0 3px;"></div>
-        <div style="background:#efefef;width:50%;height:100%;border-radius:0 3px 3px 0;"></div>
+        <div style="background:#0d0d12;width:50%;height:100%;border-radius:3px 0 0 3px;"></div>
+        <div style="background:#f0f0f0;width:50%;height:100%;border-radius:0 3px 3px 0;"></div>
       </div>
-      <div class="char-name">בורדר קולי</div>
-      <div class="char-desc">שחור-לבן<br>קלאסי</div>
+      <div class="char-name">קולין</div>
+      <div class="char-desc">Border Collie<br>שחור-לבן</div>
     </div>
-    <div class="char-card" id="breed-merle" onclick="selectBreed('merle')">
+    <div class="char-card selected" id="breed-zippo" onclick="selectBreed('zippo')">
       <div class="breed-swatch">
-        <div style="background:#7a9db5;width:50%;height:100%;border-radius:3px 0 0 3px;"></div>
-        <div style="background:#dce8ef;width:50%;height:100%;border-radius:0 3px 3px 0;"></div>
+        <div style="background:#0d0d12;width:34%;height:100%;border-radius:3px 0 0 3px;"></div>
+        <div style="background:#f0f0f0;width:33%;height:100%;"></div>
+        <div style="background:#c26a18;width:33%;height:100%;border-radius:0 3px 3px 0;"></div>
       </div>
-      <div class="char-name">מרל</div>
-      <div class="char-desc">כחול-אפור<br>מנומר</div>
+      <div class="char-name">זיפו</div>
+      <div class="char-desc">Border Collie<br>טריקולור</div>
     </div>
-    <div class="char-card" id="breed-brown" onclick="selectBreed('brown')">
+    <div class="char-card" id="breed-momo" onclick="selectBreed('momo')">
       <div class="breed-swatch">
-        <div style="background:#6b3718;width:50%;height:100%;border-radius:3px 0 0 3px;"></div>
-        <div style="background:#f0d090;width:50%;height:100%;border-radius:0 3px 3px 0;"></div>
+        <div style="background:#f5f5f2;width:50%;height:100%;border-radius:3px 0 0 3px;"></div>
+        <div style="background:#eee4cc;width:50%;height:100%;border-radius:0 3px 3px 0;"></div>
       </div>
-      <div class="char-name">חום-לבן</div>
-      <div class="char-desc">גוון חום<br>חם</div>
-    </div>
-  </div>
-
-  <!-- Dog name -->
-  <p style="font-family:'Oswald';font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.45);margin-bottom:8px;">שם הכלב</p>
-  <input type="text" id="dog-name-input" placeholder="מקס / לונה / ריו..." maxlength="12"
-    style="font-family:'Oswald';font-size:18px;letter-spacing:3px;padding:10px 20px;border-radius:2px;text-align:center;margin-bottom:18px;width:220px;background:rgba(255,255,255,0.06);color:white;border:1px solid rgba(212,160,23,0.3);outline:none;direction:rtl;">
-
-  <!-- Accessory selection -->
-  <p style="font-family:'Oswald';font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.45);margin-bottom:10px;">אקססוריז</p>
-  <div style="display:flex;gap:10px;justify-content:center;margin-bottom:22px;flex-wrap:wrap;">
-    <div class="acc-card selected" id="acc-none" onclick="selectAcc('none')">
-      <div style="font-size:24px;">🐕</div>
-      <div class="acc-label">ללא</div>
-    </div>
-    <div class="acc-card" id="acc-bandana-red" onclick="selectAcc('bandana-red')">
-      <div style="font-size:24px;">🔴</div>
-      <div class="acc-label">בנדנה אדום</div>
-    </div>
-    <div class="acc-card" id="acc-bandana-blue" onclick="selectAcc('bandana-blue')">
-      <div style="font-size:24px;">🔵</div>
-      <div class="acc-label">בנדנה כחול</div>
-    </div>
-    <div class="acc-card" id="acc-bandana-gold" onclick="selectAcc('bandana-gold')">
-      <div style="font-size:24px;">🟡</div>
-      <div class="acc-label">בנדנה זהב</div>
+      <div class="char-name">מומו</div>
+      <div class="char-desc">צ'יוואווה<br>לבן</div>
     </div>
   </div>
 
@@ -568,6 +648,34 @@
 <!-- Controls hint (desktop) -->
 <div id="controls-hint">חצים / WASD – תנועה &nbsp;|&nbsp; SPACE – קפיצה &nbsp;|&nbsp; ESC – השהיה</div>
 
+<!-- Confetti canvas -->
+<canvas id="confetti-canvas"></canvas>
+
+<!-- Finish screen -->
+<div id="finish-screen">
+  <div id="finish-card">
+    <div id="finish-trophy">🏆</div>
+    <div id="finish-badge">CoolDog · אג׳יליטי</div>
+    <div id="finish-title">שלם!</div>
+    <div id="finish-subtitle">המסלול הושלם בהצלחה</div>
+    <div class="gold-line" style="margin:0 auto 16px;"></div>
+    <div id="finish-time-big">00.00</div>
+    <div id="finish-time-label">זמן סיום</div>
+    <div id="finish-stars">⭐</div>
+    <div id="finish-newbest">★ שיא אישי חדש! ★</div>
+    <div class="finish-divider"></div>
+    <div id="finish-name-row">
+      <input type="text" id="finish-name-input" placeholder="שמך לטבלת שיאים" maxlength="12" dir="rtl">
+      <button id="finish-save-btn" onclick="finishSaveScore()">שמור</button>
+    </div>
+    <div id="finish-leaderboard">
+      <h3>🏅 לוח שיאים — שלב <span id="lb-level-num">1</span></h3>
+      <div id="lb-rows"><div style="padding:12px;color:rgba(255,255,255,0.3);font-family:'Oswald';font-size:12px;text-align:center;">טוען...</div></div>
+    </div>
+    <div id="finish-btn-row"></div>
+  </div>
+</div>
+
 <!-- Pause button -->
 <button id="pause-btn">⏸ השהיה</button>
 
@@ -588,6 +696,7 @@
       <button class="level-btn btn-primary" id="pause-resume-btn">▶ המשך</button>
       <button class="level-btn btn-ghost-sm" id="pause-restart-btn">↺ אתחל שלב</button>
       <button class="level-btn btn-ghost-sm" id="pause-lvl1-btn">⏮ שלב 1</button>
+      <button class="level-btn btn-ghost-sm" id="pause-charselect-btn">🐕 בחר כלב</button>
     </div>
   </div>
 </div>
@@ -2212,131 +2321,226 @@ function checkStartLine(playerPos, now) {
 //  BORDER COLLIE MODEL
 // ═══════════════════════════════════════════════
 
-// Materials palette
-const MAT = {
-  black: new THREE.MeshLambertMaterial({ color: 0x111111 }),
-  white: new THREE.MeshLambertMaterial({ color: 0xefefef }),
-  accent: new THREE.MeshLambertMaterial({ color: 0x111111 }), // ears, tail — same as black for BC
-  nose:  new THREE.MeshLambertMaterial({ color: 0x0d0d0d }),
-  eye:   new THREE.MeshLambertMaterial({ color: 0x3b2314 }),
-  eyeW:  new THREE.MeshLambertMaterial({ color: 0xffffff }),
-};
+// ═══════════════════════════════════════════════
+//  DOG MODEL — ported from USDDN (colin / zippo / momo)
+// ═══════════════════════════════════════════════
+const dogGroup = new THREE.Group();  // root — position & yaw driven by physics
+let   dogModel = new THREE.Group();  // geometry lives here
+let   dogTail  = null;               // tail group for wag
+const legs     = [];                 // leg pivot groups for gait
 
-const dogGroup = new THREE.Group();
-
-// Body
-const body = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.45, 1.0), MAT.black);
-body.position.set(0, 0.85, 0);
-body.castShadow = true;
-dogGroup.add(body);
-
-// Belly
-const belly = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.38, 0.75), MAT.white);
-belly.position.set(0, -0.04, 0.05);
-body.add(belly);
-
-// Collar (white shoulder ring)
-const collar = new THREE.Mesh(new THREE.BoxGeometry(0.57, 0.12, 0.18), MAT.white);
-collar.position.set(0, 0.1, -0.41);
-body.add(collar);
-
-// Head group — pivot point lets us bob the head naturally
-const headGroup = new THREE.Group();
-headGroup.position.set(0, 0.28, -0.52);
-body.add(headGroup);
-
-const head = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.34, 0.38), MAT.black);
-head.castShadow = true;
-headGroup.add(head);
-
-// Blaze (white stripe down face)
-const blaze = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.28, 0.05), MAT.white);
-blaze.position.set(0, 0.01, -0.18);
-head.add(blaze);
-
-// Muzzle
-const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.16, 0.22), MAT.white);
-muzzle.position.set(0, -0.06, -0.26);
-headGroup.add(muzzle);
-
-// Nose
-const noseMesh = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.07, 0.05), MAT.nose);
-noseMesh.position.set(0, 0.03, -0.12);
-muzzle.add(noseMesh);
-
-// Eyes
-function makeEye(side) {
-  const g = new THREE.Group();
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), MAT.eyeW));
-  const iris = new THREE.Mesh(new THREE.SphereGeometry(0.038, 8, 8), MAT.eye);
-  iris.position.z = -0.03;
-  g.add(iris);
-  g.position.set(side * 0.1, 0.05, -0.19);
-  head.add(g);
-}
-makeEye(-1); makeEye(1);
-
-// Ears
-function makeEar(side) {
-  const ear = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.18, 0.08), MAT.accent);
-  ear.position.set(side * 0.18, 0.21, 0.02);
-  ear.rotation.z = side * 0.25;
-  headGroup.add(ear);
-}
-makeEar(-1); makeEar(1);
-
-// Tail — pivot group so wag rotates the whole tail
-const tailGroup = new THREE.Group();
-tailGroup.position.set(0, 0.1, 0.5);
-body.add(tailGroup);
-
-const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.025, 0.55, 6), MAT.accent);
-tail.rotation.x = -0.7;
-tail.position.y = 0.22;
-tail.castShadow = true;
-tailGroup.add(tail);
-
-const tailTip = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.015, 0.14, 6), MAT.white);
-tailTip.position.y = 0.34;
-tail.add(tailTip);
-
-// Legs — array of pivot groups, one per leg
-// Each group is parented to body; rotation.x drives the swing.
-// Layout (body local space, dog faces -Z):
-//   front = -Z,  rear = +Z,  left = -X,  right = +X
-const legs = [];
-function makeLeg(xOff, zOff) {
-  const g = new THREE.Group();
-  g.position.set(xOff, -0.2, zOff);
-  body.add(g);
-
-  const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.055, 0.32, 6), MAT.black);
-  upper.position.y = -0.16;
-  g.add(upper);
-
-  const lower = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.04, 0.28, 6), MAT.black);
-  lower.position.y = -0.28;
-  upper.add(lower);
-
-  // White sock on front legs only (zOff < 0 = front in body-local space)
-  if (zOff < 0) {
-    const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.038, 0.12, 6), MAT.white);
-    sock.position.y = -0.1;
-    lower.add(sock);
-  }
-
-  legs.push(g);
-}
-makeLeg(-0.18, -0.32); // front-left   → legs[0]
-makeLeg( 0.18, -0.32); // front-right  → legs[1]
-makeLeg(-0.18,  0.28); // rear-left    → legs[2]
-makeLeg( 0.18,  0.28); // rear-right   → legs[3]
-
-// Apply shadow casting to the whole dog hierarchy
-dogGroup.traverse(c => { if (c.isMesh) c.castShadow = true; });
-// The model is built facing -Z; rotate 180° so it faces +Z to match movement
-dogGroup.rotation.y = Math.PI;
+dogGroup.add(dogModel);
 scene.add(dogGroup);
+
+// Shared material helper (MeshStandard matches USDDN)
+function dogMat(hex, rough, metal) {
+  return new THREE.MeshStandardMaterial({ color: hex, roughness: rough || 0.85, metalness: metal || 0 });
+}
+
+// Add a mesh to dogModel (or custom parent)
+function dogMesh(geo, mat, px, py, pz, parent) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(px || 0, py || 0, pz || 0);
+  m.castShadow = true;
+  (parent || dogModel).add(m);
+  return m;
+}
+
+// Shared leg builder — adds 4 legs, pushes into `legs[]`
+function buildLegs(upperMat, lowerMat, s) {
+  const defs = [
+    { x:  0.135*s, z:  0.36*s, phase: 0 },
+    { x: -0.135*s, z:  0.36*s, phase: Math.PI },
+    { x:  0.135*s, z: -0.34*s, phase: Math.PI },
+    { x: -0.135*s, z: -0.34*s, phase: 0 },
+  ];
+  defs.forEach(d => {
+    const lg = new THREE.Group();
+    lg.position.set(d.x, 0.42*s, d.z);
+    dogModel.add(lg);
+    const up = new THREE.Mesh(new THREE.BoxGeometry(0.13*s, 0.32*s, 0.13*s), upperMat);
+    up.position.y = -0.16*s; up.castShadow = true; lg.add(up);
+    const kneeG = new THREE.Group(); kneeG.position.y = -0.32*s; lg.add(kneeG);
+    const lo = new THREE.Mesh(new THREE.BoxGeometry(0.11*s, 0.30*s, 0.11*s), lowerMat);
+    lo.position.y = -0.15*s; lo.castShadow = true; kneeG.add(lo);
+    const pw = new THREE.Mesh(new THREE.BoxGeometry(0.15*s, 0.08*s, 0.19*s), lowerMat);
+    pw.position.set(0, -0.31*s, 0.03*s); pw.castShadow = true; kneeG.add(pw);
+    legs.push({ node: lg, knee: kneeG, phase: d.phase });
+  });
+}
+
+function buildColin() {
+  const s = 1.0;
+  const BLACK = dogMat(0x0d0d12, .86, .06);
+  const WHITE = dogMat(0xf0f0f0, .80, .0);
+  const NOSE  = dogMat(0x100808, .38, .04);
+  const EYE   = dogMat(0x0a0a10, .10, .12);
+  const EYEHI = dogMat(0xffffff, .05, .0);
+  const BROW  = dogMat(0x3a2810, .80);
+  dogMesh(new THREE.BoxGeometry(.54*s,.50*s,1.10*s), BLACK, 0,.50*s,0);
+  dogMesh(new THREE.BoxGeometry(.50*s,.38*s,.40*s),  WHITE, 0,.50*s,.42*s);
+  dogMesh(new THREE.BoxGeometry(.42*s,.16*s,.80*s),  WHITE, 0,.28*s,.02*s);
+  dogMesh(new THREE.BoxGeometry(.48*s,.20*s,.22*s),  WHITE, 0,.72*s,.30*s);
+  const neck = new THREE.Group(); neck.position.set(0,.76*s,.34*s); neck.rotation.x=-.28; dogModel.add(neck);
+  dogMesh(new THREE.BoxGeometry(.38*s,.36*s,.36*s), BLACK, 0,.12*s,0, neck);
+  dogMesh(new THREE.BoxGeometry(.34*s,.36*s,.34*s), WHITE, 0,.12*s,.03*s, neck);
+  const headG = new THREE.Group(); headG.position.set(0,1.08*s,.50*s); headG.rotation.x=.08; dogModel.add(headG);
+  dogMesh(new THREE.BoxGeometry(.46*s,.44*s,.50*s), BLACK, 0,0,0, headG);
+  dogMesh(new THREE.BoxGeometry(.10*s,.40*s,.48*s), WHITE, 0,.04*s,.01*s, headG);
+  const muzzle = new THREE.Group(); muzzle.position.set(0,-.06*s,.28*s); headG.add(muzzle);
+  dogMesh(new THREE.BoxGeometry(.28*s,.22*s,.32*s), WHITE, 0,0,0, muzzle);
+  const nm = dogMesh(new THREE.SphereGeometry(.075*s,10,8), NOSE, 0,.06*s,.17*s, muzzle);
+  nm.scale.set(1,.65,.85);
+  dogMesh(new THREE.BoxGeometry(.20*s,.04*s,.04*s), NOSE, 0,-.07*s,.17*s, muzzle);
+  [-1,1].forEach(sd => {
+    const eg = new THREE.Group(); eg.position.set(sd*.17*s,.10*s,.22*s); headG.add(eg);
+    dogMesh(new THREE.SphereGeometry(.082*s,10,10), EYE,   0,0,0, eg);
+    dogMesh(new THREE.SphereGeometry(.028*s,7,7),   EYEHI, .02*sd,.03*s,.07*s, eg);
+    dogMesh(new THREE.SphereGeometry(.035*s,7,7),   BROW,  sd*.17*s,.20*s,.23*s, headG);
+    const earG = new THREE.Group(); earG.position.set(sd*.22*s,.20*s,-.08*s);
+    earG.rotation.z=sd*.12; earG.rotation.x=-.10; headG.add(earG);
+    const oe = new THREE.Mesh(new THREE.CylinderGeometry(.01*s,.14*s,.38*s,4), BLACK);
+    oe.position.y=.19*s; oe.castShadow=true; earG.add(oe);
+    const ie = new THREE.Mesh(new THREE.CylinderGeometry(.005*s,.09*s,.30*s,4), dogMat(0xffd8d0,.9));
+    ie.position.set(0,.17*s,.02*s); earG.add(ie);
+  });
+  const tG = new THREE.Group(); tG.position.set(0,.60*s,-.56*s); tG.rotation.x=.55; dogModel.add(tG); dogTail=tG;
+  const t1 = new THREE.Mesh(new THREE.CylinderGeometry(.09*s,.07*s,.35*s,8),BLACK); t1.position.y=.17*s; t1.castShadow=true; tG.add(t1);
+  const g2 = new THREE.Group(); g2.position.y=.34*s; g2.rotation.x=-.50; tG.add(g2);
+  const t2 = new THREE.Mesh(new THREE.CylinderGeometry(.07*s,.04*s,.28*s,8),BLACK); t2.position.y=.14*s; t2.castShadow=true; g2.add(t2);
+  const g3 = new THREE.Group(); g3.position.y=.28*s; g3.rotation.x=-.40; g2.add(g3);
+  const t3 = new THREE.Mesh(new THREE.CylinderGeometry(.04*s,.01*s,.20*s,8),WHITE); t3.position.y=.10*s; t3.castShadow=true; g3.add(t3);
+  buildLegs(BLACK, WHITE, s);
+  [0,1,2,3].forEach(i => dogMesh(new THREE.BoxGeometry(.13*s,.12*s,.13*s), WHITE, 0,-.56*s,0, legs[i].node));
+}
+
+function buildZippo() {
+  const s = 1.0;
+  const BLACK = dogMat(0x0d0d12, .86, .06);
+  const WHITE = dogMat(0xf0f0f0, .80, .0);
+  const TAN   = dogMat(0xc26a18, .78, .02);
+  const NOSE  = dogMat(0x100808, .38, .04);
+  const EYE   = dogMat(0x2a1800, .12, .08);
+  const EYEHI = dogMat(0xffffff, .05, .0);
+  dogMesh(new THREE.BoxGeometry(.54*s,.50*s,1.10*s), BLACK, 0,.50*s,0);
+  dogMesh(new THREE.BoxGeometry(.50*s,.36*s,.38*s),  WHITE, 0,.50*s,.43*s);
+  dogMesh(new THREE.BoxGeometry(.46*s,.18*s,.24*s),  WHITE, 0,.72*s,.30*s);
+  dogMesh(new THREE.BoxGeometry(.40*s,.14*s,.75*s),  WHITE, 0,.28*s,.02*s);
+  [-1,1].forEach(sd => dogMesh(new THREE.BoxGeometry(.06*s,.36*s,.60*s), TAN, sd*.27*s,.52*s,-.08*s));
+  const neck = new THREE.Group(); neck.position.set(0,.76*s,.34*s); neck.rotation.x=-.28; dogModel.add(neck);
+  dogMesh(new THREE.BoxGeometry(.38*s,.36*s,.36*s), BLACK, 0,.12*s,0, neck);
+  dogMesh(new THREE.BoxGeometry(.34*s,.36*s,.34*s), WHITE, 0,.12*s,.03*s, neck);
+  const headG = new THREE.Group(); headG.position.set(0,1.08*s,.50*s); headG.rotation.x=.08; dogModel.add(headG);
+  dogMesh(new THREE.BoxGeometry(.46*s,.44*s,.50*s), BLACK, 0,0,0, headG);
+  dogMesh(new THREE.BoxGeometry(.12*s,.42*s,.48*s), WHITE, 0,.04*s,.01*s, headG);
+  [-1,1].forEach(sd => {
+    dogMesh(new THREE.SphereGeometry(.06*s,8,8),      TAN, sd*.15*s,.18*s,.25*s, headG);
+    dogMesh(new THREE.BoxGeometry(.07*s,.16*s,.18*s), TAN, sd*.22*s,-.02*s,.22*s, headG);
+  });
+  const muzzle = new THREE.Group(); muzzle.position.set(0,-.06*s,.28*s); headG.add(muzzle);
+  dogMesh(new THREE.BoxGeometry(.28*s,.22*s,.32*s), WHITE, 0,0,0, muzzle);
+  const nm = dogMesh(new THREE.SphereGeometry(.075*s,10,8), NOSE, 0,.06*s,.17*s, muzzle);
+  nm.scale.set(1,.65,.85);
+  dogMesh(new THREE.BoxGeometry(.20*s,.04*s,.04*s), NOSE, 0,-.07*s,.17*s, muzzle);
+  [-1,1].forEach(sd => {
+    const eg = new THREE.Group(); eg.position.set(sd*.17*s,.10*s,.22*s); headG.add(eg);
+    dogMesh(new THREE.SphereGeometry(.082*s,10,10), EYE,   0,0,0, eg);
+    dogMesh(new THREE.SphereGeometry(.028*s,7,7),   EYEHI, .02*sd,.03*s,.07*s, eg);
+  });
+  [-1,1].forEach(sd => {
+    const earG = new THREE.Group(); earG.position.set(sd*.22*s,.20*s,-.08*s);
+    earG.rotation.z=sd*.10; headG.add(earG);
+    if (sd === -1) {
+      const oe=new THREE.Mesh(new THREE.CylinderGeometry(.01*s,.14*s,.38*s,4),BLACK); oe.position.y=.19*s; oe.castShadow=true; earG.add(oe);
+      const ie=new THREE.Mesh(new THREE.CylinderGeometry(.005*s,.09*s,.30*s,4),dogMat(0xffd8d0,.9)); ie.position.set(0,.17*s,.02*s); earG.add(ie);
+    } else {
+      const base=new THREE.Mesh(new THREE.BoxGeometry(.13*s,.20*s,.11*s),BLACK); base.position.y=.10*s; base.castShadow=true; earG.add(base);
+      const tipG=new THREE.Group(); tipG.position.y=.20*s; tipG.rotation.x=.95; tipG.rotation.z=sd*.15; earG.add(tipG);
+      const to=new THREE.Mesh(new THREE.CylinderGeometry(.01*s,.10*s,.22*s,4),BLACK); to.position.y=.11*s; to.castShadow=true; tipG.add(to);
+      const ti=new THREE.Mesh(new THREE.CylinderGeometry(.005*s,.06*s,.17*s,4),dogMat(0xffd8d0,.9)); ti.position.set(0,.10*s,.02*s); tipG.add(ti);
+    }
+  });
+  const tG=new THREE.Group(); tG.position.set(0,.60*s,-.56*s); tG.rotation.x=.55; dogModel.add(tG); dogTail=tG;
+  const t1=new THREE.Mesh(new THREE.CylinderGeometry(.09*s,.07*s,.35*s,8),BLACK); t1.position.y=.17*s; t1.castShadow=true; tG.add(t1);
+  const g2=new THREE.Group(); g2.position.y=.34*s; g2.rotation.x=-.50; tG.add(g2);
+  const t2=new THREE.Mesh(new THREE.CylinderGeometry(.07*s,.04*s,.28*s,8),BLACK); t2.position.y=.14*s; t2.castShadow=true; g2.add(t2);
+  const g3=new THREE.Group(); g3.position.y=.28*s; g3.rotation.x=-.40; g2.add(g3);
+  const t3=new THREE.Mesh(new THREE.CylinderGeometry(.04*s,.01*s,.20*s,8),WHITE); t3.position.y=.10*s; t3.castShadow=true; g3.add(t3);
+  buildLegs(BLACK, WHITE, s);
+  [0,1,2,3].forEach(i => dogMesh(new THREE.BoxGeometry(.13*s,.12*s,.13*s), WHITE, 0,-.56*s,0, legs[i].node));
+  [2,3].forEach(i => dogMesh(new THREE.BoxGeometry(.09*s,.20*s,.09*s), TAN, 0,-.36*s,0, legs[i].node));
+}
+
+function buildMomo() {
+  const s = 0.58;
+  const WHITE = dogMat(0xf5f5f2, .78, .0);
+  const CREAM = dogMat(0xeee4cc, .82, .0);
+  const NOSE  = dogMat(0x1a0a0a, .40, .04);
+  const EYE   = dogMat(0x1a1a24, .10, .12);
+  const EYEHI = dogMat(0xffffff, .05, .0);
+  const PINK  = dogMat(0xffb8c0, .88, .0);
+  const LIP   = dogMat(0xcc8890, .85, .0);
+  dogMesh(new THREE.BoxGeometry(.42*s,.44*s,.88*s), WHITE, 0,.44*s,0);
+  dogMesh(new THREE.BoxGeometry(.40*s,.36*s,.32*s), WHITE, 0,.46*s,.36*s);
+  dogMesh(new THREE.BoxGeometry(.34*s,.14*s,.62*s), CREAM, 0,.26*s,0);
+  const neck=new THREE.Group(); neck.position.set(0,.72*s,.28*s); neck.rotation.x=-.22; dogModel.add(neck);
+  dogMesh(new THREE.BoxGeometry(.32*s,.28*s,.30*s), WHITE, 0,.10*s,0, neck);
+  const headG=new THREE.Group(); headG.position.set(0,1.00*s,.40*s); headG.rotation.x=.06; dogModel.add(headG);
+  const skull=new THREE.Mesh(new THREE.SphereGeometry(.26*s,12,10), WHITE);
+  skull.scale.set(1,1.05,.95); skull.castShadow=true; headG.add(skull);
+  dogMesh(new THREE.BoxGeometry(.20*s,.08*s,.10*s), WHITE, 0,-.06*s,.20*s, headG);
+  const muzzle=new THREE.Group(); muzzle.position.set(0,-.10*s,.22*s); headG.add(muzzle);
+  dogMesh(new THREE.BoxGeometry(.20*s,.16*s,.22*s), WHITE, 0,0,0, muzzle);
+  const nm=dogMesh(new THREE.SphereGeometry(.055*s,10,8), NOSE, 0,.06*s,.12*s, muzzle);
+  nm.scale.set(1,.65,.80);
+  dogMesh(new THREE.BoxGeometry(.12*s,.03*s,.03*s), LIP, 0,-.06*s,.12*s, muzzle);
+  [-1,1].forEach(sd => {
+    const eg=new THREE.Group(); eg.position.set(sd*.13*s,.06*s,.20*s); headG.add(eg);
+    dogMesh(new THREE.SphereGeometry(.096*s,12,12), EYE,   0,0,0, eg);
+    dogMesh(new THREE.SphereGeometry(.032*s,8,8),   EYEHI, .02*sd,.04*s,.09*s, eg);
+    dogMesh(new THREE.SphereGeometry(.016*s,6,6),   EYEHI, -.03*sd,-.02*s,.09*s, eg);
+  });
+  [-1,1].forEach(sd => {
+    const earG=new THREE.Group(); earG.position.set(sd*.22*s,.10*s,-.05*s);
+    earG.rotation.z=sd*.45; earG.rotation.x=-.12; headG.add(earG);
+    const oe=new THREE.Mesh(new THREE.CylinderGeometry(.005*s,.18*s,.50*s,5), WHITE);
+    oe.position.y=.25*s; oe.castShadow=true; earG.add(oe);
+    const ie=new THREE.Mesh(new THREE.CylinderGeometry(.003*s,.12*s,.40*s,5), PINK);
+    ie.position.set(0,.23*s,.015*s); earG.add(ie);
+  });
+  const tG=new THREE.Group(); tG.position.set(0,.52*s,-.44*s); tG.rotation.x=.80; dogModel.add(tG); dogTail=tG;
+  const t1=new THREE.Mesh(new THREE.CylinderGeometry(.055*s,.04*s,.25*s,8),CREAM); t1.position.y=.12*s; t1.castShadow=true; tG.add(t1);
+  const g2=new THREE.Group(); g2.position.y=.24*s; g2.rotation.x=-1.0; tG.add(g2);
+  const t2=new THREE.Mesh(new THREE.CylinderGeometry(.04*s,.025*s,.22*s,8),WHITE); t2.position.y=.11*s; t2.castShadow=true; g2.add(t2);
+  const g3=new THREE.Group(); g3.position.y=.22*s; g3.rotation.x=-.60; g2.add(g3);
+  const t3=new THREE.Mesh(new THREE.CylinderGeometry(.025*s,.008*s,.15*s,8),WHITE); t3.position.y=.07*s; t3.castShadow=true; g3.add(t3);
+  buildLegs(WHITE, CREAM, s);
+}
+
+// Build active dog — called on startGame
+let currentDogType = 'zippo';
+function rebuildDog(type) {
+  currentDogType = type;
+  // Remove old geometry
+  dogModel.traverse(obj => {
+    if (obj.geometry) obj.geometry.dispose();
+    if (obj.material) obj.material.dispose();
+  });
+  while (dogModel.children.length) dogModel.remove(dogModel.children[0]);
+  dogTail = null;
+  legs.length = 0;
+  if      (type === 'colin') buildColin();
+  else if (type === 'momo')  buildMomo();
+  else                       buildZippo();
+  dogGroup.traverse(c => { if (c.isMesh) c.castShadow = true; });
+}
+
+// Default dog at boot
+rebuildDog('zippo');
+// USDDN models face +Z; no extra rotation needed
+dogGroup.rotation.y = 0;
+
+
 
 // ═══════════════════════════════════════════════
 //  PLAYER / PHYSICS STATE
@@ -2350,7 +2554,7 @@ const player = {
   gravity:    -18,
 };
 
-let dogYaw = Math.PI;     // dog faces -Z toward the course at spawn
+let dogYaw = 0;     // USDDN models face +Z — no offset needed
 const GROUND_Y = 0;
 
 // ── Keyboard input ────────────────────────────
@@ -2575,7 +2779,10 @@ function animate() {
     }
 
     // ══ 5. DOG ROTATION ══════════════════════════
-    if (moving && moveDir.lengthSq() > 0.001) {
+    // Only rotate yaw toward moveDir when moving forward or sideways.
+    // Pure backward (inputZ > 0, no inputX) keeps current facing direction.
+    const isBackward = inputZ > 0 && inputX === 0;
+    if (moving && !isBackward && moveDir.lengthSq() > 0.001) {
       const target = Math.atan2(moveDir.x, moveDir.z);
       let diff = target - dogYaw;
       while (diff >  Math.PI) diff -= Math.PI * 2;
@@ -2591,7 +2798,7 @@ function animate() {
 
   dogGroup.position.copy(player.pos);
   // +Math.PI because the model is built facing -Z; offset keeps movement direction correct
-  dogGroup.rotation.y = dogYaw + Math.PI;
+  dogGroup.rotation.y = dogYaw;
 
   // ══ 6. CAMERA FOLLOW ═════════════════════════
   let desired;
@@ -2643,24 +2850,20 @@ function animate() {
   if (moving || isAir) legTime += dt * 8.5;
   wagTime += dt;
 
-  // Diagonal trot gait — legs[0] FL, [1] FR, [2] RL, [3] RR
-  // Diagonal pairs (FL+RR) and (FR+RL) move in opposite phase
-  const swing = isAir ? 0.25 : (moving ? 0.52 : 0);
-  legs[0].rotation.x =  Math.sin(legTime)             * swing;  // FL
-  legs[1].rotation.x =  Math.sin(legTime + Math.PI)   * swing;  // FR  (opposite)
-  legs[2].rotation.x =  Math.sin(legTime + Math.PI)   * swing;  // RL  (diagonal with FL)
-  legs[3].rotation.x =  Math.sin(legTime)             * swing;  // RR  (diagonal with FR)
+  // USDDN-style gait: each leg has a phase offset
+  if (legs.length >= 4) {
+    const swing = isAir ? 0.22 : (moving ? 0.50 : 0);
+    legs.forEach(lg => {
+      lg.node.rotation.x = Math.sin(legTime + lg.phase) * swing;
+    });
+  }
 
-  // Tail wag via tailGroup pivot — enthusiastic when running
-  const wagSpeed = moving ? 5.5 : 3.0;
-  const wagAmp   = moving ? 0.60 : 0.30;
-  tailGroup.rotation.z = Math.sin(wagTime * wagSpeed) * wagAmp;
-
-  // Body & head bob while running
-  // body is a direct child of dogGroup at y=0.85; nudge it slightly
-  body.position.y = 0.85 + (moving ? Math.abs(Math.sin(legTime)) * 0.022 : 0);
-  // headGroup is parented to body; bob it gently
-  headGroup.rotation.x = moving ? Math.sin(legTime * 0.5) * 0.06 : 0;
+  // Tail wag — dogTail is the USDDN tail group
+  if (dogTail) {
+    const wagSpeed = moving ? 5.5 : 3.0;
+    const wagAmp   = moving ? 0.55 : 0.25;
+    dogTail.rotation.z = Math.sin(wagTime * wagSpeed) * wagAmp;
+  }
 
   renderer.render(scene, camera);
 }
@@ -2906,6 +3109,7 @@ function setPaused(val) {
 document.getElementById('pause-resume-btn').onclick  = () => setPaused(false);
 document.getElementById('pause-restart-btn').onclick = () => { setPaused(false); startLevel(currentLevel); };
 document.getElementById('pause-lvl1-btn').onclick    = () => { setPaused(false); startLevel(0); };
+document.getElementById('pause-charselect-btn').onclick = () => returnToCharSelect();
 document.getElementById('pause-btn').onclick         = () => {
   if (levelOverlay.classList.contains('visible')) return;
   if (countdownActive) return;
@@ -3048,61 +3252,182 @@ function showLevelStart(levelIndex) {
   showLevelOverlay(false);
 }
 
-function showLevelComplete(formattedTime) {
-  const def      = LEVEL_DEFS[currentLevel];
-  const isLast   = currentLevel === LEVEL_DEFS.length - 1;
-  const isChamp  = isLast;
+// ═══════════════════════════════════════════════
+//  FINISH SCREEN — confetti + leaderboard
+// ═══════════════════════════════════════════════
 
-  levelCard.className = isChamp ? 'completion championship' : 'completion';
-  levelBadge.textContent  = isLast ? '🏆 אליפות' : `שלב ${currentLevel + 1} הושלם!`;
-  levelTitle.textContent  = isLast ? 'אלוף!' : def.name;
-  levelSubtitle.textContent = isLast ? 'כבשת את המסלול המלא!' : 'המסלול הושלם!';
+// ── Leaderboard (localStorage per level) ──────
+function getLB(levelIdx) {
+  try { return JSON.parse(localStorage.getItem(`agility_lb_${levelIdx}`)) || []; } catch { return []; }
+}
+function saveLB(levelIdx, entries) {
+  try { localStorage.setItem(`agility_lb_${levelIdx}`, JSON.stringify(entries)); } catch {}
+}
+function addToLB(levelIdx, name, ms) {
+  const entries = getLB(levelIdx);
+  entries.push({ name, ms });
+  entries.sort((a, b) => a.ms - b.ms);
+  const trimmed = entries.slice(0, 8);
+  saveLB(levelIdx, trimmed);
+  return trimmed;
+}
 
-  // Obstacle tags
-  levelObsEl.innerHTML = '';
-  def.obstacles.forEach(o => {
-    const tag = document.createElement('div');
-    tag.className = 'level-obs-tag';
-    tag.textContent = obsTypeLabel(o.type);
-    levelObsEl.appendChild(tag);
-  });
+// ── Confetti ───────────────────────────────────
+const confettiCanvas = document.getElementById('confetti-canvas');
+const confettiCtx    = confettiCanvas.getContext('2d');
+let   confettiParts  = [];
+let   confettiRaf    = null;
 
-  // Time + stars
-  levelFinalTime.textContent  = formattedTime;
-  levelFinalTime.style.display = 'block';
-  levelTimeLabel.style.display = 'block';
-  const stars = getStars(timerFinal, currentLevel);
-  levelStars.textContent  = stars;
-  levelStars.style.display = 'block';
-  const numStars = (stars.match(/⭐/g) || []).length;
-  if (numStars > getSavedStars(currentLevel)) saveStars(currentLevel, numStars);
+function launchConfetti() {
+  confettiCanvas.width  = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+  confettiCanvas.classList.add('visible');
+  confettiParts = [];
+  const cols = ['#d4a017','#fff','#4ec96e','#e04444','#4a9eff','#ff9944'];
+  for (let i = 0; i < 180; i++) {
+    confettiParts.push({
+      x: Math.random() * confettiCanvas.width,
+      y: -10 - Math.random() * 200,
+      w: 7 + Math.random() * 8,
+      h: 4 + Math.random() * 4,
+      col: cols[Math.floor(Math.random() * cols.length)],
+      vx: (Math.random() - 0.5) * 4,
+      vy: 2 + Math.random() * 4,
+      rot: Math.random() * Math.PI * 2,
+      drot: (Math.random() - 0.5) * 0.18,
+      life: 1,
+    });
+  }
+  function tick() {
+    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    let alive = false;
+    confettiParts.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.rot += p.drot; p.vy += 0.06;
+      if (p.y < confettiCanvas.height + 20) alive = true;
+      confettiCtx.save();
+      confettiCtx.globalAlpha = Math.min(1, (confettiCanvas.height - p.y) / 120);
+      confettiCtx.translate(p.x, p.y);
+      confettiCtx.rotate(p.rot);
+      confettiCtx.fillStyle = p.col;
+      confettiCtx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      confettiCtx.restore();
+    });
+    if (alive) confettiRaf = requestAnimationFrame(tick);
+    else stopConfetti();
+  }
+  if (confettiRaf) cancelAnimationFrame(confettiRaf);
+  confettiRaf = requestAnimationFrame(tick);
+}
 
-  // Personal best check
-  checkAndSavePB(currentLevel, timerFinal);
+function stopConfetti() {
+  if (confettiRaf) { cancelAnimationFrame(confettiRaf); confettiRaf = null; }
+  confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  confettiCanvas.classList.remove('visible');
+}
+
+// ── Render leaderboard ─────────────────────────
+let _finishLevelIdx = 0;
+let _finishMs = 0;
+
+function renderLB(entries, highlightMs) {
+  const container = document.getElementById('lb-rows');
+  if (!entries.length) {
+    container.innerHTML = '<div style="padding:12px;color:rgba(255,255,255,0.3);font-family:Oswald;font-size:12px;text-align:center;">אין שיאים עדיין</div>';
+    return;
+  }
+  container.innerHTML = entries.map((e, i) => {
+    const hi = e.ms === highlightMs;
+    return `<div class="lb-row${hi ? ' highlight' : ''}">
+      <span class="lb-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)}</span>
+      <span class="lb-name">${e.name}</span>
+      <span class="lb-time">${formatTime(e.ms)}</span>
+    </div>`;
+  }).join('');
+}
+
+function finishSaveScore() {
+  const nameEl = document.getElementById('finish-name-input');
+  const name   = nameEl.value.trim() || 'אנונימי';
+  const btn    = document.getElementById('finish-save-btn');
+  btn.disabled = true;
+  btn.textContent = '✓ נשמר';
+  const entries = addToLB(_finishLevelIdx, name, _finishMs);
+  renderLB(entries, _finishMs);
+}
+
+// ── Show finish screen ─────────────────────────
+function showFinishScreen(levelIdx, ms, formattedTime, isNewBest, isLast) {
+  _finishLevelIdx = levelIdx;
+  _finishMs = ms;
+
+  const def = LEVEL_DEFS[levelIdx];
+  document.getElementById('finish-trophy').textContent   = isLast ? '🏆' : '✅';
+  document.getElementById('finish-badge').textContent    = isLast ? 'CoolDog · אליפות' : `CoolDog · שלב ${levelIdx + 1}`;
+  document.getElementById('finish-title').textContent    = isLast ? 'אלוף!' : def.name;
+  document.getElementById('finish-subtitle').textContent = isLast ? 'כבשת את המסלול המלא!' : 'המסלול הושלם!';
+  document.getElementById('finish-time-big').textContent = formattedTime;
+  document.getElementById('finish-stars').textContent    = getStars(ms, levelIdx);
+  document.getElementById('lb-level-num').textContent    = levelIdx + 1;
+  document.getElementById('finish-newbest').classList.toggle('show', isNewBest);
+
+  // Reset save button
+  const btn = document.getElementById('finish-save-btn');
+  btn.disabled = false; btn.textContent = 'שמור';
+  document.getElementById('finish-name-input').value = '';
+
+  // Load existing leaderboard
+  renderLB(getLB(levelIdx), null);
 
   // Buttons
-  levelBtnRow.innerHTML = '';
+  const btnRow = document.getElementById('finish-btn-row');
+  btnRow.innerHTML = '';
   if (!isLast) {
     const nextBtn = document.createElement('button');
-    nextBtn.className   = 'level-btn btn-gold';
-    nextBtn.textContent = `הבא: שלב ${currentLevel + 2} ←`;
-    nextBtn.onclick = () => { startLevel(currentLevel + 1); };
-    levelBtnRow.appendChild(nextBtn);
+    nextBtn.className = 'btn';
+    nextBtn.textContent = `שלב ${levelIdx + 2} ←`;
+    nextBtn.onclick = () => { hideFinishScreen(); startLevel(levelIdx + 1); };
+    btnRow.appendChild(nextBtn);
   } else {
     const replayBtn = document.createElement('button');
-    replayBtn.className   = 'level-btn btn-gold';
+    replayBtn.className = 'btn';
     replayBtn.textContent = '🏆 שחק שוב';
-    replayBtn.onclick = () => { startLevel(0); };
-    levelBtnRow.appendChild(replayBtn);
+    replayBtn.onclick = () => { hideFinishScreen(); startLevel(0); };
+    btnRow.appendChild(replayBtn);
   }
+  const retryBtn = document.createElement('button');
+  retryBtn.className = 'btn btn-ghost';
+  retryBtn.style.cssText = 'background:transparent;border-color:rgba(255,255,255,0.15);color:rgba(255,255,255,0.55);';
+  retryBtn.textContent = '↩ נסה שוב';
+  retryBtn.onclick = () => { hideFinishScreen(); startLevel(levelIdx); };
+  btnRow.appendChild(retryBtn);
 
-  const restartBtn = document.createElement('button');
-  restartBtn.className   = 'level-btn btn-ghost-sm';
-  restartBtn.textContent = `↩ נסה שוב שלב ${currentLevel + 1}`;
-  restartBtn.onclick = () => { startLevel(currentLevel); };
-  levelBtnRow.appendChild(restartBtn);
+  const dogBtn = document.createElement('button');
+  dogBtn.className = 'btn btn-ghost';
+  dogBtn.style.cssText = 'background:transparent;border-color:rgba(255,255,255,0.15);color:rgba(255,255,255,0.55);';
+  dogBtn.textContent = '🐕 בחר כלב';
+  dogBtn.onclick = () => { hideFinishScreen(); returnToCharSelect(); };
+  btnRow.appendChild(dogBtn);
 
-  showLevelOverlay(true);
+  document.getElementById('finish-screen').classList.add('visible');
+  launchConfetti();
+}
+
+function hideFinishScreen() {
+  document.getElementById('finish-screen').classList.remove('visible');
+  stopConfetti();
+}
+
+function showLevelComplete(formattedTime) {
+  const def    = LEVEL_DEFS[currentLevel];
+  const isLast = currentLevel === LEVEL_DEFS.length - 1;
+
+  // Stars & PB
+  const stars    = getStars(timerFinal, currentLevel);
+  const numStars = (stars.match(/⭐/g) || []).length;
+  if (numStars > getSavedStars(currentLevel)) saveStars(currentLevel, numStars);
+  const isNewBest = checkAndSavePB(currentLevel, timerFinal);
+
+  showFinishScreen(currentLevel, timerFinal, formattedTime, isNewBest, isLast);
 }
 
 function showLevelOverlay(isCompletion) {
@@ -3142,7 +3467,7 @@ function resetPlayerToSpawn() {
 
   // Apply immediately — no lerp
   dogGroup.position.copy(player.pos);
-  dogGroup.rotation.y = dogYaw + Math.PI;
+  dogGroup.rotation.y = dogYaw;
 
   // Snap camera directly behind dog
   const sinY = Math.sin(dogYaw);
@@ -3205,70 +3530,26 @@ function startLevel(levelIndex) {
   showLevelStart(levelIndex);
 }
 
-// ── Character select state ────────────────────
-let selectedBreed = 'bc';
-let selectedAcc   = 'none';
+// ── Character select ─────────────────────────
+let selectedDog = 'zippo';
 
-const BREEDS = {
-  bc:    { primary: 0x111111, secondary: 0xefefef, accent: 0x111111, label: 'בורדר קולי' },
-  merle: { primary: 0x7a9db5, secondary: 0xdce8ef, accent: 0x3a6070, label: 'מרל'        },
-  brown: { primary: 0x6b3718, secondary: 0xf0d090, accent: 0x3d1a08, label: 'חום-לבן'    },
-};
-
-const ACC_COLORS = {
-  'none':          null,
-  'bandana-red':   0xcc2200,
-  'bandana-blue':  0x1a4ebf,
-  'bandana-gold':  0xd4a017,
-};
-
-function selectBreed(breed) {
-  selectedBreed = breed;
+function selectBreed(type) {
+  selectedDog = type;
   document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('breed-' + breed).classList.add('selected');
-  applyBreed(breed);
+  document.getElementById('breed-' + type).classList.add('selected');
+  rebuildDog(type); // live preview
 }
 
-function selectAcc(acc) {
-  selectedAcc = acc;
-  document.querySelectorAll('.acc-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('acc-' + acc).classList.add('selected');
-  applyAccessory(acc);
-}
-
-function applyBreed(breed) {
-  const b = BREEDS[breed] || BREEDS.bc;
-  MAT.black.color.setHex(b.primary);   MAT.black.needsUpdate = true;
-  MAT.white.color.setHex(b.secondary); MAT.white.needsUpdate = true;
-  MAT.accent.color.setHex(b.accent);   MAT.accent.needsUpdate = true;
-}
-
-let bandanaMesh = null;
-function applyAccessory(acc) {
-  if (bandanaMesh) { collar.remove(bandanaMesh); bandanaMesh = null; }
-  const col = ACC_COLORS[acc];
-  if (!col) return;
-  const mat = new THREE.MeshLambertMaterial({ color: col, side: THREE.DoubleSide });
-  const geo = new THREE.BufferGeometry();
-  const v = new Float32Array([
-    -0.22,  0.0,   0.0,
-     0.22,  0.0,   0.0,
-     0.0,  -0.28, -0.12,
-  ]);
-  geo.setAttribute('position', new THREE.BufferAttribute(v, 3));
-  geo.setIndex(new THREE.BufferAttribute(new Uint16Array([0,1,2, 0,2,1]), 1));
-  geo.computeVertexNormals();
-  bandanaMesh = new THREE.Mesh(geo, mat);
-  bandanaMesh.position.set(0, -0.05, -0.08);
-  collar.add(bandanaMesh);
+function returnToCharSelect() {
+  setPaused(false);
+  hideLevelOverlay();
+  isPaused = false;
+  courseComplete = false;
+  document.getElementById('char-select').classList.add('active');
 }
 
 function startGame() {
-  const dogName = document.getElementById('dog-name-input').value.trim() || 'בורדר';
-  applyBreed(selectedBreed);
-  applyAccessory(selectedAcc);
-  document.getElementById('dog-name-hud').textContent = dogName;
-  document.getElementById('dog-name-panel').style.opacity = '1';
+  rebuildDog(selectedDog);
   document.getElementById('char-select').classList.remove('active');
   showLevelStart(0);
 }
@@ -3278,8 +3559,9 @@ buildLevel(0);
 buildPips(courseObstacles.length);
 obsLastTrigger = new Array(courseObstacles.length).fill(0);
 resetPlayerToSpawn();
-applyBreed('bc');
 animate();
+
+
 
 
 </script>
