@@ -84,6 +84,17 @@
     #course-msg.good { color: #3dc46e; border-color: #3dc46e; }
     #course-msg.done { color: var(--gold); border-color: var(--gold); }
 
+    /* ── FULLSCREEN BUTTON ── */
+    #fullscreen-btn {
+      position: fixed; top: 52px; left: 20px;
+      background: rgba(0,0,0,0.72); border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 3px; padding: 8px 12px;
+      color: rgba(255,255,255,0.7); font-family:'Oswald',sans-serif;
+      font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; cursor: pointer;
+      z-index: 50; transition: all 0.2s; pointer-events: all;
+    }
+    #fullscreen-btn:hover { border-color: var(--gold); color: var(--gold); }
+
     /* ── CONTROLS HINT ── */
     #controls-hint {
       position: fixed; bottom: 16px; right: 16px;
@@ -102,18 +113,18 @@
       width: 50%; height: 100%; pointer-events: all;
     }
     #joystick-base {
-      width: 132px; height: 132px; border-radius: 50%;
+      border-radius: 50%;
       background: radial-gradient(circle at 40% 35%,rgba(255,255,255,0.07),rgba(0,0,0,0.32));
       border: 1.5px solid rgba(255,255,255,0.14);
       backdrop-filter: blur(10px);
       box-shadow: 0 8px 32px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.07);
-      position: absolute; display: none; transform: translate(-50%, -50%);
+      position: absolute; display: none;
     }
     #joystick-thumb {
-      width: 54px; height: 54px; border-radius: 50%;
+      border-radius: 50%;
       background: radial-gradient(circle at 35% 30%,rgba(255,255,255,0.92),rgba(175,175,175,0.65));
       box-shadow: 0 4px 18px rgba(0,0,0,0.72);
-      position: absolute; display: none; transform: translate(-50%, -50%);
+      position: absolute; display: none;
     }
     #jump-btn {
       position: absolute; bottom: 50px; left: 50px;
@@ -730,6 +741,9 @@
 <!-- Pause button -->
 <button id="pause-btn">⏸ השהיה</button>
 
+<!-- Fullscreen button -->
+<button id="fullscreen-btn" title="מסך מלא">⛶</button>
+
 <!-- Countdown overlay -->
 <div id="countdown-overlay">
   <div id="countdown-number">3</div>
@@ -953,36 +967,46 @@ const dirtMat = new THREE.MeshBasicMaterial({ color: 0x7a5a10, transparent: true
   scene.add(dp);
 });
 
-// ── Grass tufts — short blades outside infield ─
+// ── Grass tufts — merged geometry (single draw call per color) ─
 (function buildGrass() {
-  const grassMats = [
-    new THREE.MeshBasicMaterial({ color: 0x4caf50, side: THREE.DoubleSide }),
-    new THREE.MeshBasicMaterial({ color: 0x388e3c, side: THREE.DoubleSide }),
-    new THREE.MeshBasicMaterial({ color: 0x66bb6a, side: THREE.DoubleSide }),
-  ];
-  const grassGeo = new THREE.PlaneGeometry(0.18, 0.28);
-  const RNG_POSITIONS = [];
-  // Outside infield, inside fence — strip x=±[22..27]
+  const grassColors = [0x4caf50, 0x388e3c, 0x66bb6a];
+  const baseGeo = new THREE.PlaneGeometry(0.18, 0.28);
+
+  // Collect transforms per color bucket
+  const buckets = [[], [], []];
+
   for (let z = -8; z < 130; z += 1.4) {
     [-1, 1].forEach(side => {
       for (let b = 0; b < 3; b++) {
-        RNG_POSITIONS.push([
-          side * (22.5 + Math.random() * 4.5),
-          z + Math.random() * 1.2,
-        ]);
+        const gx   = side * (22.5 + Math.random() * 4.5);
+        const gz   = z + Math.random() * 1.2;
+        const ci   = Math.floor(Math.random() * 3);
+        // Two crossed planes per tuft
+        [0, Math.PI / 2].forEach(ry => {
+          const m = new THREE.Matrix4();
+          const pos = new THREE.Vector3(gx, 0.14, gz);
+          const rot = new THREE.Euler(
+            (Math.random() - 0.5) * 0.3,
+            ry + Math.random() * 0.4,
+            0
+          );
+          const quat = new THREE.Quaternion().setFromEuler(rot);
+          m.compose(pos, quat, new THREE.Vector3(1, 1, 1));
+          buckets[ci].push(m);
+        });
       }
     });
   }
-  RNG_POSITIONS.forEach(([gx, gz]) => {
-    const mat = grassMats[Math.floor(Math.random() * grassMats.length)];
-    // Two crossed planes per tuft
-    [0, Math.PI / 2].forEach(ry => {
-      const m = new THREE.Mesh(grassGeo, mat);
-      m.position.set(gx, 0.14, gz);
-      m.rotation.y = ry + Math.random() * 0.4;
-      m.rotation.x = (Math.random() - 0.5) * 0.3;
-      scene.add(m);
-    });
+
+  // Merge each color bucket into a single mesh
+  grassColors.forEach((col, ci) => {
+    if (!buckets[ci].length) return;
+    const mat = new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide });
+    const merged = new THREE.InstancedMesh(baseGeo, mat, buckets[ci].length);
+    buckets[ci].forEach((m, idx) => merged.setMatrixAt(idx, m));
+    merged.instanceMatrix.needsUpdate = true;
+    merged.frustumCulled = false;
+    scene.add(merged);
   });
 })();
 function makeArenaFence() {
@@ -1271,10 +1295,22 @@ function tickFans(now) {
   const cheerAmp   = 0.12 + _cheerLevel * 0.88;
   const dogX = player.pos.x, dogZ = player.pos.z;
   const t = now * 0.001;
+
+  // Build a simple frustum approximation: camera forward + FOV cone culling
+  // Use camera direction to skip fans behind camera + far away
+  const camDirX = Math.sin(dogYaw);
+  const camDirZ = Math.cos(dogYaw);
+  const CAM_CULL_DIST = 80; // skip fans beyond this distance
+
   for (let fi = 0; fi < fans.length; fi++) {
     const f = fans[fi];
     const fdx = dogX - f.mesh.position.x;
     const fdz = dogZ - f.mesh.position.z;
+    const distSq = fdx*fdx + fdz*fdz;
+
+    // Skip fans beyond cull distance
+    if (distSq > CAM_CULL_DIST * CAM_CULL_DIST) continue;
+
     const worldAngle = Math.atan2(fdx, fdz);
     let diff = worldAngle - f.baseY;
     while (diff >  Math.PI) diff -= Math.PI*2;
@@ -1291,24 +1327,37 @@ function tickFans(now) {
 
 
 
-// ── Trees (pushed outside arena) ──────────────
+// ── Trees with LOD (pushed outside arena) ──────
 function makeTree(x, z) {
   const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5d4037 });
   const leaf1Mat = new THREE.MeshLambertMaterial({ color: 0x2e7d32 });
   const leaf2Mat = new THREE.MeshLambertMaterial({ color: 0x388e3c });
   const leaf3Mat = new THREE.MeshLambertMaterial({ color: 0x43a047 });
-  const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.22, 0.38, 2.8, 8),
-    trunkMat
-  );
-  trunk.position.set(x, 1.4, z); trunk.castShadow = true; scene.add(trunk);
-  // Main canopy — 3-sphere cluster
+
+  // HIGH detail — full tree
+  const hiGroup = new THREE.Group();
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.38, 2.8, 8), trunkMat);
+  trunk.position.set(x, 1.4, z); hiGroup.add(trunk);
   [[0, 3.8, 0, 2.1, leaf1Mat],[0.5, 4.7, 0.2, 1.4, leaf2Mat],[-0.4, 4.3, 0.3, 1.1, leaf3Mat]].forEach(([ox,oy,oz,r,mat]) => {
     const top = new THREE.Mesh(new THREE.SphereGeometry(r, 9, 8), mat);
     top.position.set(x + ox, oy, z + oz);
-    top.castShadow = true;
-    scene.add(top);
+    hiGroup.add(top);
   });
+
+  // LOW detail — single sphere billboard
+  const loGroup = new THREE.Group();
+  const loTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.40, 2.8, 5), trunkMat);
+  loTrunk.position.set(x, 1.4, z); loGroup.add(loTrunk);
+  const loBall = new THREE.Mesh(new THREE.SphereGeometry(2.4, 6, 5), leaf1Mat);
+  loBall.position.set(x, 4.0, z); loGroup.add(loBall);
+
+  // LOD switching
+  const lod = new THREE.LOD();
+  lod.addLevel(hiGroup, 0);    // full detail < 60 units
+  lod.addLevel(loGroup, 60);   // low detail 60–120
+  // Beyond 120 — nothing (auto-culled)
+  lod.position.set(0, 0, 0);
+  scene.add(lod);
 }
 // Trees — all outside the fence (FENCE_W=28, so |x|>31 is safe)
 [[-33,10],[-36,-5],[33,12],[36,0],[-32,30],[32,28],
@@ -2443,10 +2492,11 @@ function clearObstacle(i, now) {
   refreshDiscTexture(obs);
   currentObstacle++;
 
-  // Crowd + burst
+  // Crowd + burst + haptic
   triggerCrowdReaction('clear');
   spawnClearBurst(player.pos.x, player.pos.y, player.pos.z);
   popAnnouncer('✓', '#3dc46e');
+  if (navigator.vibrate) navigator.vibrate(40);
 
   if (currentObstacle >= courseObstacles.length) {
     courseComplete = true;
@@ -2455,6 +2505,7 @@ function clearObstacle(i, now) {
     stopTimer(now);
     popAnnouncer('🏆 שלם!', '#d4a017');
     triggerCrowdReaction('finish');
+    if (navigator.vibrate) navigator.vibrate([80, 50, 80, 50, 120]);
   } else {
     setObsColour(courseObstacles[currentObstacle], COL_NEXT);
     refreshDiscTexture(courseObstacles[currentObstacle]);
@@ -2479,12 +2530,14 @@ let penaltyFlashTimer = null;
 
 function applyPenalty() {
   if (timerRunning) timerStart -= PENALTY_MS;
+  runPenaltyCount++;
   penaltyEl.textContent = '+5 שניות';
   penaltyEl.classList.add('show');
   clearTimeout(penaltyFlashTimer);
   penaltyFlashTimer = setTimeout(() => penaltyEl.classList.remove('show'), 1800);
   showMsg('⚠️ כניסה שגויה! +5 שניות עונש!', 'warn', 2800);
   triggerCrowdReaction('penalty');
+  if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
 }
 
 // ── Weave detection needs previous Z ─────────
@@ -3331,11 +3384,23 @@ document.addEventListener('keyup', e => {
 });
 
 // ── Virtual joystick ──────────────────────────
-const joystick = { active:false, startX:0, startY:0, dx:0, dy:0, maxRadius:55, _wasAtEdge:false };
+const joystick = { active:false, startX:0, startY:0, dx:0, dy:0, maxRadius:Math.min(55, window.innerWidth * 0.09), _wasAtEdge:false };
 const JOYSTICK_DEADZONE = 0.08;
-const jZone  = document.getElementById('joystick-zone');
+
+// Dynamic joystick base size
+const _joySize = Math.min(132, window.innerWidth * 0.22);
+const _joyThumbSize = Math.round(_joySize * 0.41);
 const jBase  = document.getElementById('joystick-base');
 const jThumb = document.getElementById('joystick-thumb');
+jBase.style.width  = _joySize + 'px';
+jBase.style.height = _joySize + 'px';
+jBase.style.marginLeft  = -_joySize/2 + 'px';
+jBase.style.marginTop   = -_joySize/2 + 'px';
+jThumb.style.width  = _joyThumbSize + 'px';
+jThumb.style.height = _joyThumbSize + 'px';
+jThumb.style.marginLeft = -_joyThumbSize/2 + 'px';
+jThumb.style.marginTop  = -_joyThumbSize/2 + 'px';
+const jZone  = document.getElementById('joystick-zone');
 
 jZone.addEventListener('touchstart', e => {
   e.preventDefault();
@@ -3603,6 +3668,80 @@ function updateTrail(dt) {
   trailGeo.attributes.color.needsUpdate    = true;
 }
 
+// ── Paw print footprints ──────────────────────
+const PAW_MAX   = 60;
+const PAW_LIFE  = 3.5;
+const PAW_DIST  = 1.4;        // distance between prints
+const pawPrints = [];
+let   _lastPawPos = new THREE.Vector3(999, 0, 999);
+let   _prevDogPos = new THREE.Vector3(0, 0, 0);   // position where LAST print was placed
+let   _pawSide = 1;
+
+function makePawTexture() {
+  const c = document.createElement('canvas');
+  c.width = 64; c.height = 64;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, 64, 64);
+  ctx.fillStyle = 'rgba(30,65,30,0.80)';
+  // Main pad – top centre (will be "behind" in world space after rotation)
+  ctx.beginPath(); ctx.ellipse(32, 20, 12, 10, 0, 0, Math.PI*2); ctx.fill();
+  // 4 toes – below pad (pointing "forward" in world space)
+  [[14,38],[25,45],[38,45],[50,38]].forEach(([tx,ty]) => {
+    ctx.beginPath(); ctx.ellipse(tx, ty, 7, 6, 0, 0, Math.PI*2); ctx.fill();
+  });
+  return new THREE.CanvasTexture(c);
+}
+const pawTex = makePawTexture();
+const pawGeoBase = new THREE.PlaneGeometry(0.6, 0.6);
+
+function spawnPawPrint(x, z, yaw) {
+  if (!player.isGrounded) return;
+  const dist = Math.sqrt((x - _lastPawPos.x)**2 + (z - _lastPawPos.z)**2);
+  if (dist < PAW_DIST) return;
+
+  // Place at the PREVIOUS position so print appears where the paw was
+  const printX = _lastPawPos.x;
+  const printZ = _lastPawPos.z;
+  _lastPawPos.set(x, 0, z);
+  _pawSide *= -1;
+
+  // Perpendicular offset (left/right of travel direction)
+  const perpX =  Math.cos(yaw) * 0.20 * _pawSide;
+  const perpZ = -Math.sin(yaw) * 0.20 * _pawSide;
+
+  const mat = new THREE.MeshBasicMaterial({
+    map: pawTex, transparent: true, opacity: 0.60,
+    depthWrite: false, side: THREE.DoubleSide,
+  });
+  const mesh = new THREE.Mesh(pawGeoBase, mat);
+  // Lay flat on ground
+  mesh.rotation.x = -Math.PI / 2;
+  // Rotate so toes point in direction of travel; slight toe-out per side
+  mesh.rotation.z = yaw + (_pawSide > 0 ? 0.25 : -0.25);
+  mesh.position.set(printX + perpX, 0.04, printZ + perpZ);
+  scene.add(mesh);
+
+  if (pawPrints.length >= PAW_MAX) {
+    const old = pawPrints.shift();
+    scene.remove(old.mesh);
+    old.mesh.material.dispose();
+  }
+  pawPrints.push({ mesh, mat, life: PAW_LIFE, maxLife: PAW_LIFE });
+}
+
+function updatePawPrints(dt) {
+  for (let i = pawPrints.length - 1; i >= 0; i--) {
+    const p = pawPrints[i];
+    p.life -= dt;
+    p.mat.opacity = Math.max(0, 0.55 * (p.life / p.maxLife));
+    if (p.life <= 0) {
+      scene.remove(p.mesh);
+      p.mat.dispose();
+      pawPrints.splice(i, 1);
+    }
+  }
+}
+
 const clock = new THREE.Clock();
 
 function animate() {
@@ -3823,14 +3962,18 @@ function animate() {
   updateMovingObstacles(dt);
   updateHandler(dt, player.pos, moving);
   updateTrail(dt);
+  updatePawPrints(dt);
+  // Spawn paw prints when running on ground
+  if (moving && player.isGrounded) spawnPawPrint(player.pos.x, player.pos.z, dogYaw);
   updateClouds(dt);
 
-  // Blob shadow — follows dog, scales with height
+  // Blob shadow — follows dog, scales + fades with height
   blobShadow.position.x = player.pos.x;
   blobShadow.position.z = player.pos.z;
-  const shadowScale = Math.max(0.3, 1 - player.pos.y * 0.18);
+  const heightFactor = Math.max(0, 1 - player.pos.y * 0.22);
+  const shadowScale = 0.4 + heightFactor * 0.6;
   blobShadow.scale.setScalar(shadowScale);
-  blobShadowMat.opacity = dogGroup.visible ? 0.28 * shadowScale : 0;
+  blobShadowMat.opacity = dogGroup.visible ? 0.32 * heightFactor : 0;
 
   // Minimap — update every 3 frames
   if (Math.floor(nowMs / 16) % 3 === 0) updateMinimap();
@@ -4097,6 +4240,26 @@ document.addEventListener('keydown', e => {
   }
 });
 
+// ── Fullscreen ────────────────────────────────
+const fsBtn = document.getElementById('fullscreen-btn');
+function updateFsBtn() {
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  fsBtn.textContent = isFs ? '✕' : '⛶';
+  fsBtn.title = isFs ? 'צא ממסך מלא' : 'מסך מלא';
+}
+fsBtn.addEventListener('click', () => {
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    const el = document.documentElement;
+    if (el.requestFullscreen)       el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  } else {
+    if (document.exitFullscreen)       document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  }
+});
+document.addEventListener('fullscreenchange',       updateFsBtn);
+document.addEventListener('webkitfullscreenchange', updateFsBtn);
+
 // ── Personal best ─────────────────────────────
 const newBestFlash = document.getElementById('newbest-flash');
 let   newBestTimer = null;
@@ -4139,12 +4302,33 @@ function obsTypeLabel(type) {
            longjump: '↔️ קיר קפיצה', water: '💧 מכשול מים', moving: '↔️ מכשול נע' }[type] || type;
 }
 
+// Track penalties for star rating
+let runPenaltyCount = 0;
+
 function getStars(ms, levelIndex) {
   const def = LEVEL_DEFS[0];
   if (!def) return '⭐';
-  if (ms <= def.gold)   return '⭐⭐⭐';
+  // Perfect run (no penalties) and under gold time → 3 stars
+  if (runPenaltyCount === 0 && ms <= def.gold)   return '⭐⭐⭐';
+  // Up to 1 penalty or under silver time → 2 stars
+  if (runPenaltyCount <= 1 && ms <= def.silver)  return '⭐⭐';
+  // Under silver time but had penalties → still 2 stars
   if (ms <= def.silver) return '⭐⭐';
   return '⭐';
+}
+
+function getStarTooltip(ms) {
+  const def = LEVEL_DEFS[0];
+  if (!def) return '';
+  const lines = [];
+  if (runPenaltyCount === 0 && ms <= def.gold)
+    lines.push('ריצה מושלמת – בלי עונשים + זמן זהב!');
+  else if (runPenaltyCount > 0)
+    lines.push(`${runPenaltyCount} עונש${runPenaltyCount > 1 ? 'ים' : ''} בריצה`);
+  if (ms <= def.gold)        lines.push(`זמן זהב: ${formatTime(def.gold)}`);
+  else if (ms <= def.silver) lines.push(`זמן כסף: ${formatTime(def.silver)}`);
+  else                       lines.push(`יעד זהב: ${formatTime(def.gold)}`);
+  return lines.join(' | ');
 }
 
 function getSavedStars(levelIndex) {
@@ -4311,6 +4495,7 @@ function showFinishScreen(levelIdx, ms, formattedTime, isNewBest, isLast) {
   document.getElementById('finish-subtitle').textContent = LEVEL_DEFS[0].subtitle;
   document.getElementById('finish-time-big').textContent = formattedTime;
   document.getElementById('finish-stars').textContent    = getStars(ms, levelIdx);
+  document.getElementById('finish-stars').title          = getStarTooltip(ms);
   const lbLevelEl = document.getElementById('lb-level-num');
   if (lbLevelEl) lbLevelEl.textContent = '';
   document.getElementById('finish-newbest').classList.toggle('show', isNewBest);
@@ -4373,6 +4558,7 @@ function resetPlayerToSpawn() {
   player.vel.set(0, 0, 0);
   player.isGrounded = true;
   dogYaw = spawnYaw;
+  _lastPawPos.set(spawnX, 0, spawnZ);
 
   // Apply immediately — no lerp
   dogGroup.position.copy(player.pos);
@@ -4393,6 +4579,7 @@ function resetPlayerToSpawn() {
 }
 
 function resetCourseState() {
+  runPenaltyCount  = 0;
   currentObstacle  = 0;
   courseComplete   = false;
   timerRunning     = false;
