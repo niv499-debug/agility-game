@@ -811,13 +811,13 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x6bbde8);
 scene.fog = new THREE.Fog(0x9dd4ef, 60, 150);
 
-// ── Sky dome — gradient from deep blue to warm horizon ──
+// ── Sky dome — fixed day gradient ─────────────
 (function buildSky() {
   const skyGeo = new THREE.SphereGeometry(190, 24, 12);
   const skyMat = new THREE.ShaderMaterial({
     side: THREE.BackSide,
     depthWrite: false,
-    uniforms: { uTime: { value: 0 } },
+    uniforms: {},
     vertexShader: `
       varying vec3 vPos;
       void main() { vPos = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }
@@ -826,36 +826,52 @@ scene.fog = new THREE.Fog(0x9dd4ef, 60, 150);
       varying vec3 vPos;
       void main() {
         float h = clamp(vPos.y / 120.0, 0.0, 1.0);
-        vec3 sky    = mix(vec3(0.53,0.81,0.98), vec3(0.19,0.45,0.82), h);
+        vec3 sky     = mix(vec3(0.53,0.81,0.98), vec3(0.19,0.45,0.82), h);
         vec3 horizon = mix(sky, vec3(0.95,0.88,0.72), clamp(1.0 - h * 4.0, 0.0, 1.0));
         gl_FragColor = vec4(horizon, 1.0);
       }
     `
   });
   scene.add(new THREE.Mesh(skyGeo, skyMat));
-  // Subtle sun disc
-  const sunGeo = new THREE.SphereGeometry(5.5, 14, 10);
-  const sunMat = new THREE.MeshBasicMaterial({ color: 0xfffde0, transparent: true, opacity: 0.88 });
-  const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+  // Sun disc
+  const sunMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(5.5, 14, 10),
+    new THREE.MeshBasicMaterial({ color: 0xfffde0, transparent: true, opacity: 0.88 })
+  );
   sunMesh.position.set(55, 75, -120);
   scene.add(sunMesh);
   // Sun halo
-  const haloGeo = new THREE.SphereGeometry(9.0, 14, 10);
-  const haloMat = new THREE.MeshBasicMaterial({ color: 0xfff0b0, transparent: true, opacity: 0.22 });
-  const haloMesh = new THREE.Mesh(haloGeo, haloMat);
+  const haloMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(9.0, 14, 10),
+    new THREE.MeshBasicMaterial({ color: 0xfff0b0, transparent: true, opacity: 0.22 })
+  );
   haloMesh.position.copy(sunMesh.position);
   scene.add(haloMesh);
-  // Sparse clouds — flat ellipsoids
-  const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.62 });
-  const cloudPositions = [[-50,60,-80],[30,72,-110],[90,55,-95],[-80,65,-130],[10,50,-60]];
-  cloudPositions.forEach(([cx,cy,cz]) => {
-    const cg = new THREE.SphereGeometry(1,8,6);
-    const cm = new THREE.Mesh(cg, cloudMat);
-    cm.scale.set(14 + Math.random()*8, 3.5 + Math.random()*2, 6 + Math.random()*4);
-    cm.position.set(cx, cy, cz);
-    scene.add(cm);
-  });
 })();
+
+// Moving clouds
+const clouds = [];
+const cloudMats = [];
+[[-50,60,-80],[30,72,-110],[90,55,-95],[-80,65,-130],[10,50,-60],
+ [60,68,-140],[-30,58,-70],[110,62,-100]].forEach(([cx,cy,cz]) => {
+  const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.62 });
+  const cm  = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), mat);
+  cm.scale.set(14 + Math.random()*8, 3.5 + Math.random()*2, 6 + Math.random()*4);
+  cm.position.set(cx, cy, cz);
+  cm.userData.baseX = cx;
+  cm.userData.speed = 1.5 + Math.random() * 2.0;
+  scene.add(cm);
+  clouds.push(cm);
+  cloudMats.push(mat);
+});
+
+function updateClouds(dt) {
+  clouds.forEach(c => {
+    c.position.x += c.userData.speed * dt;
+    // Wrap around when drifted far
+    if (c.position.x > 200) c.position.x = c.userData.baseX - 200;
+  });
+}
 
 // ── Camera ────────────────────────────────────
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
@@ -863,7 +879,8 @@ camera.position.set(0, 4, 8);
 camera.lookAt(0, 0, 0);
 
 // ── Lighting ──────────────────────────────────
-scene.add(new THREE.AmbientLight(0xfff5e0, 0.88));
+const ambientLight = new THREE.AmbientLight(0xfff5e0, 0.88);
+scene.add(ambientLight);
 
 const sun = new THREE.DirectionalLight(0xfff8d0, 1.1);
 sun.position.set(55, 75, -120);
@@ -871,20 +888,15 @@ sun.castShadow = false;
 scene.add(sun);
 scene.add(sun.target);
 
-// Soft blue sky fill
 const skyFill = new THREE.DirectionalLight(0x90c8f0, 0.28);
 skyFill.position.set(0, 20, 0);
 scene.add(skyFill);
 
-// Cool fill from opposite side
 const fillLight = new THREE.DirectionalLight(0x9bbde0, 0.18);
 fillLight.position.set(-10, 12, 15);
 scene.add(fillLight);
 
-// ── Ground — layered procedural grass ─────────
-// ── Ground — layered grass, angle-independent ──
-// MeshBasicMaterial = no lighting effect, color always consistent
-
+// ── Ground ────────────────────────────────────
 // Base dark green
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(200, 320),
@@ -941,7 +953,38 @@ const dirtMat = new THREE.MeshBasicMaterial({ color: 0x7a5a10, transparent: true
   scene.add(dp);
 });
 
-// ── Arena boundary fence ───────────────────────
+// ── Grass tufts — short blades outside infield ─
+(function buildGrass() {
+  const grassMats = [
+    new THREE.MeshBasicMaterial({ color: 0x4caf50, side: THREE.DoubleSide }),
+    new THREE.MeshBasicMaterial({ color: 0x388e3c, side: THREE.DoubleSide }),
+    new THREE.MeshBasicMaterial({ color: 0x66bb6a, side: THREE.DoubleSide }),
+  ];
+  const grassGeo = new THREE.PlaneGeometry(0.18, 0.28);
+  const RNG_POSITIONS = [];
+  // Outside infield, inside fence — strip x=±[22..27]
+  for (let z = -8; z < 130; z += 1.4) {
+    [-1, 1].forEach(side => {
+      for (let b = 0; b < 3; b++) {
+        RNG_POSITIONS.push([
+          side * (22.5 + Math.random() * 4.5),
+          z + Math.random() * 1.2,
+        ]);
+      }
+    });
+  }
+  RNG_POSITIONS.forEach(([gx, gz]) => {
+    const mat = grassMats[Math.floor(Math.random() * grassMats.length)];
+    // Two crossed planes per tuft
+    [0, Math.PI / 2].forEach(ry => {
+      const m = new THREE.Mesh(grassGeo, mat);
+      m.position.set(gx, 0.14, gz);
+      m.rotation.y = ry + Math.random() * 0.4;
+      m.rotation.x = (Math.random() - 0.5) * 0.3;
+      scene.add(m);
+    });
+  });
+})();
 function makeArenaFence() {
   const postMat  = new THREE.MeshLambertMaterial({ color: 0xffffff });
   const railMat  = new THREE.MeshLambertMaterial({ color: 0xffffff });
@@ -1200,11 +1243,32 @@ buildFans();
 
 // Fan animation — called from animate loop
 let _fanFrame = 0;
+let _cheerLevel = 0; // 0..1 smooth cheer intensity
+
+function triggerCrowdReaction(type) {
+  _crowdCheering = true;
+  if (crowdCheerTimeout) clearTimeout(crowdCheerTimeout);
+  if (type === 'finish') {
+    _cheerLevel = 1.0;
+    crowdCheerTimeout = setTimeout(() => { _crowdCheering = false; }, 8000);
+  } else if (type === 'penalty') {
+    _cheerLevel = Math.max(_cheerLevel, 0.35);
+    crowdCheerTimeout = setTimeout(() => { _crowdCheering = false; }, 1000);
+  } else {
+    _cheerLevel = 1.0;
+    crowdCheerTimeout = setTimeout(() => { _crowdCheering = false; }, 2500);
+  }
+}
+
 function tickFans(now) {
   _fanFrame++;
   if (_fanFrame % 4 !== 0) return;
-  const cheerSpeed = _crowdCheering ? 11 : 3;
-  const cheerAmp   = _crowdCheering ? 1.0 : 0.55;
+  // Smooth cheer level fade
+  const target = _crowdCheering ? 1.0 : 0.0;
+  _cheerLevel += (target - _cheerLevel) * 0.035;
+
+  const cheerSpeed = 2.5 + _cheerLevel * 9;
+  const cheerAmp   = 0.12 + _cheerLevel * 0.88;
   const dogX = player.pos.x, dogZ = player.pos.z;
   const t = now * 0.001;
   for (let fi = 0; fi < fans.length; fi++) {
@@ -1217,23 +1281,14 @@ function tickFans(now) {
     while (diff < -Math.PI) diff += Math.PI*2;
     const clamped = Math.max(-1.22, Math.min(1.22, diff));
     f.mesh.rotation.y += (f.baseY + clamped - f.mesh.rotation.y) * 0.08;
-    if (fi % 2 === 0 && f.wave && f.aR && f.aL) {
-      const swing = Math.sin(t * cheerSpeed + f.phase);
-      f.aR.rotation.x = -1.1 + swing * cheerAmp;
-      f.aL.rotation.x = -1.1 - swing * cheerAmp;
+    if (f.aR && f.aL) {
+      const swing = Math.sin(t * cheerSpeed + f.phase) * cheerAmp;
+      f.aR.rotation.x = -0.1 - Math.max(0, swing);
+      f.aL.rotation.x = -0.1 + Math.max(0, swing);
     }
   }
 }
 
-function triggerCrowdReaction(obsWorldZ) {
-  _crowdCheering = true;
-  if (crowdCheerTimeout) clearTimeout(crowdCheerTimeout);
-  crowdCheerTimeout = setTimeout(() => { _crowdCheering = false; }, 2500);
-}
-
-// kept for compatibility
-const allSpectators = fans.map(f => f.mesh);
-function tickCrowdWaves() {}
 
 
 // ── Trees (pushed outside arena) ──────────────
@@ -1261,9 +1316,7 @@ function makeTree(x, z) {
  [-33,100],[33,98],[-36,120],[36,118]]
   .forEach(([x,z]) => makeTree(x,z));
 
-// ═══════════════════════════════════════════════
-//  AGILITY COURSE  –  Jump · Jump · Tunnel · Jump
-// ═══════════════════════════════════════════════
+// ── Obstacle colours ──────────────────────────
 
 const COL_DEFAULT  = 0x78909c;  // blue-grey – idle (richer)
 const COL_NEXT     = 0xffcc00;  // golden yellow – next to clear
@@ -1685,8 +1738,7 @@ function makeContactObstacle(obsType, cx, cz, index, col = [], rotY = 0) {
   };
 }
 
-// ── Tire jump builder ──────────────────────────
-// A suspended tire ring — autopilot arcs dog through it
+// ── Fire Tire jump builder ─────────────────────
 function makeTireJump(cx, cz, index, col = [], rotY = 0) {
   const TIRE_R   = 0.65;
   const POST_H   = 2.2;
@@ -1709,7 +1761,8 @@ function makeTireJump(cx, cz, index, col = [], rotY = 0) {
   bar.position.set(0, POST_H - 0.15, 0);
   g.add(bar);
 
-  const tireMat = new THREE.MeshLambertMaterial({ color: isNext ? 0xffcc00 : 0x1a1a1a });
+  // Tire — dark rubber with orange trim to hint at fire
+  const tireMat = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
   const tire = new THREE.Mesh(new THREE.TorusGeometry(TIRE_R, 0.16, 12, 28), tireMat);
   tire.position.set(0, 1.5, 0);
   g.add(tire);
@@ -1727,12 +1780,14 @@ function makeTireJump(cx, cz, index, col = [], rotY = 0) {
 
   return {
     type: 'tire',
-    tireMat, disc, discTex: tex, canvas, ctx,
+    tireMat,
+    disc, discTex: tex, canvas, ctx,
     pos: new THREE.Vector3(cx, 0, cz),
     tireY: 1.5, TIRE_R, rotY,
     triggerR: 2.5,
     cleared: false, index,
     state: 'idle',
+    worldCx: cx, worldCy: 1.5, worldCz: cz,
   };
 }
 
@@ -1811,8 +1866,8 @@ function makeSeesaw(cx, cz, index, col = [], rotY = 0) {
 
   const contMat = new THREE.MeshLambertMaterial({ color: 0xf9a825 });
   [-1, 1].forEach(s => {
-    const cz2 = new THREE.Mesh(new THREE.BoxGeometry(PLANK_W, 0.12, 0.7), contMat);
-    cz2.position.set(0, PIVOT_H + s * Math.sin(0.18) * PLANK_LEN * 0.5 + 0.05, s * (PLANK_LEN / 2 - 0.35));
+    const cz2 = new THREE.Mesh(new THREE.BoxGeometry(PLANK_W, 0.06, 0.65), contMat);
+    cz2.position.set(0, 0.03, s * (PLANK_LEN / 2 - 0.33));
     g.add(cz2);
   });
 
@@ -1843,8 +1898,6 @@ function makeSeesaw(cx, cz, index, col = [], rotY = 0) {
   };
 }
 
-//  Obstacle comment block
-// ── Level definitions ─────────────────────────
 // ── Long Jump builder ─────────────────────────
 // 3 flat boards on the ground — dog runs and jumps over them
 function makeLongJump(cx, cz, index, col = [], rotY = 0) {
@@ -2024,7 +2077,56 @@ function makeMovingJump(cx, cz, index, col = []) {
   };
 }
 
-// ── Random course generator ────────────────────
+// ── Finish line ───────────────────────────────
+let finishLineGroup = null;
+function buildFinishLine(x, z, rotY) {
+  if (finishLineGroup) { scene.remove(finishLineGroup); finishLineGroup = null; }
+  const g = new THREE.Group();
+  g.position.set(x, 0, z + 3);
+  g.rotation.y = rotY;
+
+  // Two posts
+  const postMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  [-2.5, 2.5].forEach(sx => {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.5, 8), postMat);
+    post.position.set(sx, 1.75, 0);
+    g.add(post);
+  });
+
+  // Banner bar
+  const barMat = new THREE.MeshBasicMaterial({ color: 0xd4a017 });
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 5.2, 10), barMat);
+  bar.rotation.z = Math.PI / 2;
+  bar.position.set(0, 3.45, 0);
+  g.add(bar);
+
+  // Chequered flag texture
+  const fc = document.createElement('canvas'); fc.width = 256; fc.height = 64;
+  const fctx = fc.getContext('2d');
+  const sz = 16;
+  for (let col = 0; col < fc.width / sz; col++)
+    for (let row = 0; row < fc.height / sz; row++) {
+      fctx.fillStyle = (col + row) % 2 === 0 ? '#ffffff' : '#000000';
+      fctx.fillRect(col * sz, row * sz, sz, sz);
+    }
+  const flagTex = new THREE.CanvasTexture(fc);
+  const flagMat = new THREE.MeshBasicMaterial({ map: flagTex, side: THREE.DoubleSide });
+  const flag = new THREE.Mesh(new THREE.PlaneGeometry(5.0, 0.7), flagMat);
+  flag.position.set(0, 3.1, 0);
+  g.add(flag);
+
+  // Glowing ground stripe
+  const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.72 });
+  const stripe = new THREE.Mesh(new THREE.PlaneGeometry(5.0, 0.35), stripeMat);
+  stripe.rotation.x = -Math.PI / 2;
+  stripe.position.set(0, 0.02, 0);
+  g.add(stripe);
+  g.userData.stripeMat = stripeMat;
+
+  scene.add(g);
+  finishLineGroup = g;
+  sceneObstacleObjects.push(g);
+}
 // Replaces fixed LEVEL_DEFS. Each run generates a fresh course.
 
 // Pool of obstacle types by difficulty tier
@@ -2187,6 +2289,12 @@ function buildLevel(levelIndex) {
     setObsColour(o, o.index === 0 ? COL_NEXT : COL_DEFAULT);
     refreshDiscTexture(o);
   });
+
+  // Place finish line after last obstacle
+  const last = specs[specs.length - 1];
+  const lastRotY = courseObstacles[courseObstacles.length - 1]
+    ? (courseObstacles[courseObstacles.length - 1].rotY || 0) : 0;
+  buildFinishLine(last.x, last.z, lastRotY);
 }
 
 
@@ -2317,9 +2425,8 @@ function clearObstacle(i, now) {
   refreshDiscTexture(obs);
   currentObstacle++;
 
-  // Crowd reacts near this obstacle!
-  const entry = getObsEntry(obs);
-  triggerCrowdReaction(entry.z);
+  // Crowd + burst
+  triggerCrowdReaction('clear');
   spawnClearBurst(player.pos.x, player.pos.y, player.pos.z);
   popAnnouncer('✓', '#3dc46e');
 
@@ -2329,6 +2436,7 @@ function clearObstacle(i, now) {
     showMsg('🏆 השלב הושלם! כלב מעולה!', 'done', 0);
     stopTimer(now);
     popAnnouncer('🏆 שלם!', '#d4a017');
+    triggerCrowdReaction('finish');
   } else {
     setObsColour(courseObstacles[currentObstacle], COL_NEXT);
     refreshDiscTexture(courseObstacles[currentObstacle]);
@@ -2352,14 +2460,13 @@ const PENALTY_MS   = 5000;
 let penaltyFlashTimer = null;
 
 function applyPenalty() {
-  // Shift the timer start backward so elapsed time increases by 5s
   if (timerRunning) timerStart -= PENALTY_MS;
-  // Flash on screen
   penaltyEl.textContent = '+5 שניות';
   penaltyEl.classList.add('show');
   clearTimeout(penaltyFlashTimer);
   penaltyFlashTimer = setTimeout(() => penaltyEl.classList.remove('show'), 1800);
   showMsg('⚠️ כניסה שגויה! +5 שניות עונש!', 'warn', 2800);
+  triggerCrowdReaction('penalty');
 }
 
 // ── Weave detection needs previous Z ─────────
@@ -2576,8 +2683,7 @@ function checkCourse(playerPos, now) {
     if (obs.cleared) return;
 
     if (obs.type === 'jump') {
-      if (autopilot && autopilot.obsIndex === i) return; // already running
-      if (obs.cleared) return;
+      if (autopilot && autopilot.obsIndex === i) return;
       const dx = playerPos.x - obs.pos.x;
       const dz = playerPos.z - obs.pos.z;
       const xzDist = Math.sqrt(dx*dx + dz*dz);
@@ -2912,23 +3018,14 @@ function updateDiscs() {
   courseObstacles.forEach(o => o.disc.lookAt(camera.position));
 }
 
-// ── Start line — placed a few units behind obstacle 1 ─────────────────
-// Two upright posts + a horizontal banner + a flat ground stripe
 // ── Timer state ───────────────────────────────
 const timerValueEl  = document.getElementById('timer-value');
-// finishOverlay replaced by level system
-const finishOverlay = { classList: { add: () => {}, remove: () => {} } };
-const finishTimeBig = { textContent: '' };
 
 let timerRunning  = false;
-let timerStarted  = false;   // true once the dog has crossed the start line
-let timerStart    = 0;       // performance.now() when timer began
-let timerFinal    = 0;       // elapsed ms at finish
-let startLineCrossed = false;
+let timerStarted  = false;
+let timerStart    = 0;
+let timerFinal    = 0;
 
-// The start line trigger zone — dog must pass z > 4 (into the course)
-const START_LINE_Z     = 4.0;
-const START_LINE_COOLDOWN = 2000; // ms — ignore re-crossings briefly
 let startLineCooldown  = 0;
 
 function formatTime(ms) {
@@ -2964,26 +3061,8 @@ function tickTimer(now) {
   timerValueEl.textContent = formatTime(now - timerStart);
 }
 
-function checkStartLine(playerPos, now) {
-  if (timerStarted) return;   // already started, ignore
-  if (now - startLineCooldown < START_LINE_COOLDOWN) return;
 
-  // Trigger when dog crosses from z > START_LINE_Z (moving toward course)
-  // The course obstacles are at z = -5, 2, 8 — dog spawn is at z = 0
-  // Start line is at z = +4. Dog moves in -Z direction initially (toward obstacle 1).
-  // So we trigger when dog's z drops below START_LINE_Z while moving.
-  if (playerPos.z < START_LINE_Z && !timerStarted) {
-    startLineCooldown = now;
-    startTimer(now);
-  }
-}
-// ═══════════════════════════════════════════════
-//  BORDER COLLIE MODEL
-// ═══════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════
-//  DOG MODEL — ported from USDDN (colin / zippo / momo)
-// ═══════════════════════════════════════════════
+// ── Dog model ─────────────────────────────────
 const dogGroup = new THREE.Group();  // root — position & yaw driven by physics
 let   dogModel = new THREE.Group();  // geometry lives here
 let   dogTail  = null;               // tail group for wag
@@ -2994,7 +3073,7 @@ scene.add(dogGroup);
 
 // Shared material helper (MeshStandard matches USDDN)
 function dogMat(hex, rough, metal) {
-  return new THREE.MeshStandardMaterial({ color: hex, roughness: rough || 0.85, metalness: metal || 0 });
+  return new THREE.MeshStandardMaterial({ color: hex, roughness: rough || 0.85, metalness: metal || 0, transparent: true, opacity: 1 });
 }
 
 // Add a mesh to dogModel (or custom parent)
@@ -3197,11 +3276,6 @@ function rebuildDog(type) {
 
 // Default dog at boot
 rebuildDog('zippo');
-// USDDN models face +Z; no extra rotation needed
-dogGroup.rotation.y = 0;
-
-
-
 // ═══════════════════════════════════════════════
 //  PLAYER / PHYSICS STATE
 // ═══════════════════════════════════════════════
@@ -3239,8 +3313,8 @@ document.addEventListener('keyup', e => {
 });
 
 // ── Virtual joystick ──────────────────────────
-const joystick = { active:false, startX:0, startY:0, dx:0, dy:0, maxRadius:80 };
-const JOYSTICK_DEADZONE = 0.12; // ignore tiny movements
+const joystick = { active:false, startX:0, startY:0, dx:0, dy:0, maxRadius:55, _wasAtEdge:false };
+const JOYSTICK_DEADZONE = 0.08;
 const jZone  = document.getElementById('joystick-zone');
 const jBase  = document.getElementById('joystick-base');
 const jThumb = document.getElementById('joystick-thumb');
@@ -3249,12 +3323,11 @@ jZone.addEventListener('touchstart', e => {
   e.preventDefault();
   const t = e.changedTouches[0];
   const rect = jZone.getBoundingClientRect();
-  // Spawn base at touch point
   joystick.active = true;
   joystick.startX = t.clientX;
   joystick.startY = t.clientY;
   joystick.dx = 0; joystick.dy = 0;
-  // Position base + thumb at touch point
+  joystick._wasAtEdge = false;
   const lx = t.clientX - rect.left;
   const ly = t.clientY - rect.top;
   jBase.style.left  = lx + 'px';
@@ -3263,6 +3336,7 @@ jZone.addEventListener('touchstart', e => {
   jThumb.style.left = lx + 'px';
   jThumb.style.top  = ly + 'px';
   jThumb.style.display = 'block';
+  if (navigator.vibrate) navigator.vibrate(6);
 }, { passive: false });
 
 jZone.addEventListener('touchmove', e => {
@@ -3286,13 +3360,12 @@ function updateJoy(cx, cy, rect) {
   let dy = cy - joystick.startY;
   const dist = Math.sqrt(dx*dx + dy*dy);
   const R = joystick.maxRadius;
-  if (dist > R) { dx *= R/dist; dy *= R/dist; }
-  joystick.dx = dx / R;
-  joystick.dy = dy / R;
-  // Apply dead zone — ignore tiny drifts
-  if (Math.abs(joystick.dx) < JOYSTICK_DEADZONE) joystick.dx = 0;
-  if (Math.abs(joystick.dy) < JOYSTICK_DEADZONE) joystick.dy = 0;
-  // Move thumb visually (clamped to base radius)
+  const atEdge = dist > R;
+  if (atEdge) { dx *= R/dist; dy *= R/dist; }
+  if (atEdge && !joystick._wasAtEdge && navigator.vibrate) navigator.vibrate(4);
+  joystick._wasAtEdge = atEdge;
+  joystick.dx = Math.abs(dx/R) < JOYSTICK_DEADZONE ? 0 : dx/R;
+  joystick.dy = Math.abs(dy/R) < JOYSTICK_DEADZONE ? 0 : dy/R;
   const bx = parseFloat(jBase.style.left);
   const by = parseFloat(jBase.style.top);
   jThumb.style.left = (bx + dx) + 'px';
@@ -3396,8 +3469,8 @@ const trailGeo = new THREE.BufferGeometry();
 trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
 trailGeo.setAttribute('color',    new THREE.BufferAttribute(trailColors, 3));
 const trailMat = new THREE.PointsMaterial({
-  size: 0.22, vertexColors: true, transparent: true,
-  opacity: 0.82, sizeAttenuation: true, depthWrite: false,
+  size: 0.45, vertexColors: true, transparent: true,
+  opacity: 0.92, sizeAttenuation: true, depthWrite: false,
 });
 const trailPoints = new THREE.Points(trailGeo, trailMat);
 scene.add(trailPoints);
@@ -3443,6 +3516,23 @@ function spawnClearBurst(px, py, pz) {
       vz: Math.sin(angle) * Math.cos(elevat) * speed,
       life: 1.0, maxLife: 0.5 + Math.random() * 0.6,
       r: col[0], g: col[1], b: col[2],
+    });
+  }
+}
+
+function spawnSlideParticles(px, pz, yaw) {
+  for (let i = 0; i < 6; i++) {
+    const spread = (Math.random() - 0.5) * 1.2;
+    const speed  = 1.5 + Math.random() * 2.5;
+    const perpX  = Math.cos(yaw) * spread;
+    const perpZ  = -Math.sin(yaw) * spread;
+    trailParticles.push({
+      x: px + perpX, y: 0.05, z: pz + perpZ,
+      vx: perpX * speed * 0.8 + (Math.random()-0.5)*0.6,
+      vy: 0.3 + Math.random() * 0.5,
+      vz: perpZ * speed * 0.8 + (Math.random()-0.5)*0.6,
+      life: 1.0, maxLife: 0.3 + Math.random() * 0.25,
+      r: 0.55 + Math.random()*0.15, g: 0.78 + Math.random()*0.1, b: 0.28 + Math.random()*0.15,
     });
   }
 }
@@ -3536,11 +3626,20 @@ function animate() {
       moveDir.addScaledVector(camFwd,  -sZ);
       moveDir.addScaledVector(camRight, sX);
       if (moveDir.lengthSq() > 0) moveDir.normalize();
-      player.vel.x = moveDir.x * player.speed;
-      player.vel.z = moveDir.z * player.speed;
+      // Sharp turn detection — slide + dust particles
+      const curSpeed = Math.sqrt(player.vel.x**2 + player.vel.z**2);
+      if (curSpeed > 3) {
+        const dot = (player.vel.x * moveDir.x + player.vel.z * moveDir.z) / curSpeed;
+        if (dot < -0.25) {
+          player.vel.x *= 0.55; player.vel.z *= 0.55;
+          if (Math.random() < 0.7) spawnSlideParticles(player.pos.x, player.pos.z, dogYaw);
+        }
+      }
+      player.vel.x += (moveDir.x * player.speed - player.vel.x) * Math.min(1, 10 * dt);
+      player.vel.z += (moveDir.z * player.speed - player.vel.z) * Math.min(1, 10 * dt);
     } else {
-      player.vel.x *= 0.08;
-      player.vel.z *= 0.08;
+      player.vel.x *= 0.82;
+      player.vel.z *= 0.82;
     }
 
     // ══ 3. JUMP ══════════════════════════════════
@@ -3587,8 +3686,31 @@ function animate() {
   }
 
   dogGroup.position.copy(player.pos);
-  // +Math.PI because the model is built facing -Z; offset keeps movement direction correct
   dogGroup.rotation.y = dogYaw;
+
+  // ── Tunnel fade: hide dog inside tunnel ───────
+  if (autopilot && autopilot.obsIndex !== undefined) {
+    const obs = courseObstacles[autopilot.obsIndex];
+    if (obs && obs.type === 'tunnel') {
+      const wp   = autopilot.waypoints;
+      const prog = autopilot.wpIndex / (wp.length - 1); // 0→1
+      // Fade out entering, fade in exiting
+      const inTunnel = prog > 0.1 && prog < 0.9;
+      const fade = inTunnel
+        ? Math.max(0, 1 - (prog - 0.1) / 0.15)  // fade out
+        : prog >= 0.9
+          ? Math.min(1, (prog - 0.9) / 0.1)       // fade in
+          : 1;
+      dogGroup.traverse(c => { if (c.isMesh && c.material) c.material.opacity = fade; });
+      dogGroup.visible = fade > 0.01;
+    } else {
+      dogGroup.visible = true;
+      dogGroup.traverse(c => { if (c.isMesh && c.material) c.material.opacity = 1; });
+    }
+  } else {
+    dogGroup.visible = true;
+    dogGroup.traverse(c => { if (c.isMesh && c.material) c.material.opacity = 1; });
+  }
 
   // ══ 6. CAMERA FOLLOW ═════════════════════════
   let desired;
@@ -3622,7 +3744,54 @@ function animate() {
   camera.position.copy(smoothCam);
   camera.lookAt(player.pos.x, player.pos.y + 1.1, player.pos.z);
 
-  // ══ COURSE CHECK ══════════════════════════════
+  // ── Finish line glow pulse ─────────────────────
+  if (finishLineGroup) {
+    const sm = finishLineGroup.userData.stripeMat;
+    if (sm) sm.opacity = courseComplete
+      ? 0.9 + 0.1 * Math.sin(performance.now() * 0.012)
+      : 0.45 + 0.27 * Math.sin(performance.now() * 0.004);
+  }
+
+
+  // ── Fire tire: flame particles around torus ──
+  courseObstacles.forEach(obs => {
+    if (obs.type !== 'tire' || obs.cleared) return;
+    // 6-8 flame particles per frame
+    const numParts = 6 + Math.floor(Math.random() * 3);
+    for (let fp = 0; fp < numParts; fp++) {
+      // Random point around torus ring
+      const torusAngle = Math.random() * Math.PI * 2; // angle around ring circumference
+      const tubeAngle  = Math.random() * Math.PI * 2; // angle around tube cross-section
+      const R = obs.TIRE_R;
+      const tubeR = 0.16;
+      const rotY = obs.rotY || 0;
+      const cosRY = Math.cos(rotY), sinRY = Math.sin(rotY);
+      // Torus lies in the XY plane of the group, then rotated by rotY around Y
+      const lx = (R + tubeR * Math.cos(tubeAngle)) * Math.cos(torusAngle);
+      const ly = (R + tubeR * Math.cos(tubeAngle)) * Math.sin(torusAngle);
+      const lz = tubeR * Math.sin(tubeAngle);
+      // Rotate lx/lz by rotY
+      const wx = obs.worldCx + cosRY * lx - sinRY * lz;
+      const wy = obs.worldCy + ly;
+      const wz = obs.worldCz + sinRY * lx + cosRY * lz;
+      // Flame color: white core → yellow → orange → red tip
+      const t = Math.random();
+      const r = 1.0;
+      const g = t < 0.3 ? 1.0 : t < 0.6 ? 0.55 + (0.45 * (1 - (t - 0.3) / 0.3)) : 0.15 + Math.random() * 0.2;
+      const b = t < 0.15 ? 0.8 : 0.0;
+      trailParticles.push({
+        x: wx, y: wy, z: wz,
+        vx: (Math.random()-0.5)*0.3,
+        vy: 1.5 + Math.random() * 2.5,
+        vz: (Math.random()-0.5)*0.3,
+        life: 1.0,
+        maxLife: 0.10 + Math.random() * 0.12,
+        r, g, b,
+      });
+    }
+  });
+
+
   const nowMs = performance.now();
   if (!isPaused && !gameInputLocked) {
     tickTimer(nowMs);
@@ -3630,12 +3799,22 @@ function animate() {
   }
   updateDiscs();
   updateBeacon(dt);
-  updatePathLines();
   tickFans(nowMs);
   updateSeesawTilt();
   updateMovingObstacles(dt);
   updateHandler(dt, player.pos, moving);
   updateTrail(dt);
+  updateClouds(dt);
+
+  // Blob shadow — follows dog, scales with height
+  blobShadow.position.x = player.pos.x;
+  blobShadow.position.z = player.pos.z;
+  const shadowScale = Math.max(0.3, 1 - player.pos.y * 0.18);
+  blobShadow.scale.setScalar(shadowScale);
+  blobShadowMat.opacity = dogGroup.visible ? 0.28 * shadowScale : 0;
+
+  // Minimap — update every 3 frames
+  if (Math.floor(nowMs / 16) % 3 === 0) updateMinimap();
 
   // ══ 7. ANIMATION ══════════════════════════════
   const isAir = !player.isGrounded;
@@ -3667,19 +3846,7 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// ═══════════════════════════════════════════════
-//  COURSE GUIDANCE  –  Beacon arrow + ground path
-// ═══════════════════════════════════════════════
-
-// ── Floating beacon arrow above next obstacle ──
-// Built from a cone (arrowhead) + cylinder (shaft), pulsing up/down
-// ═══════════════════════════════════════════════
-//  DIRECTION ARROW  –  Large ground arrow + tall pole
-// ═══════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════
-//  COURSE GUIDE — single Line object, zero mesh overhead
-// ═══════════════════════════════════════════════
+// ── Course guide line ─────────────────────────
 
 let guideWaypoints = [];
 let guideSegLens   = [];
@@ -3781,17 +3948,6 @@ function sampleGuideAt(s) {
   return { x:a.x+(b.x-a.x)*t, z:a.z+(b.z-a.z)*t, obsIdx:a.obsIdx };
 }
 
-function dogArcOffset() {
-  // Use the entry of the CURRENT obstacle as start — never go backward
-  if (!courseObstacles[currentObstacle]) return guideTotalLen;
-  const obsIdx = currentObstacle;
-  // Find first waypoint that belongs to currentObstacle
-  for (let i = 0; i < guideWaypoints.length; i++) {
-    if (guideWaypoints[i].obsIdx >= obsIdx) return guideSegLens[i];
-  }
-  return guideTotalLen;
-}
-
 let beaconTime = 0;
 let beaconObstacleIndex = -1;
 
@@ -3830,8 +3986,6 @@ function updateBeacon(dt) {
   guideGeo.attributes.position.needsUpdate = true;
   guideGeo.attributes.color.needsUpdate    = true;
 }
-
-function updatePathLines() {} // no-op
 
 // ═══════════════════════════════════════════════
 //  COUNTDOWN SYSTEM
@@ -3914,10 +4068,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ═══════════════════════════════════════════════
-// ═══════════════════════════════════════════════
-//  PERSONAL BEST  –  localStorage per level
-// ═══════════════════════════════════════════════
+// ── Personal best ─────────────────────────────
 const newBestFlash = document.getElementById('newbest-flash');
 let   newBestTimer = null;
 
@@ -3927,7 +4078,6 @@ function getPB(levelIndex) {
 function setPB(levelIndex, ms) {
   try { localStorage.setItem(`agility_pb_lvl${levelIndex}`, String(ms)); } catch(e) {}
 }
-function showPB(levelIndex) {}  // PB display removed
 function checkAndSavePB(levelIndex, ms) {
   const existing = getPB(levelIndex);
   if (existing === null || ms < existing) {
@@ -4162,10 +4312,8 @@ function showLevelComplete(formattedTime) {
   showFinishScreen(currentRunNumber, timerFinal, formattedTime, isNewBest, false);
 }
 
-function showLevelOverlay(isCompletion) {
+function showLevelOverlay() {
   levelOverlay.classList.add('visible');
-  // Prevent game from reacting to keys while overlay is up
-  // (keys object resets itself via the flag)
 }
 
 function hideLevelOverlay() {
@@ -4222,7 +4370,6 @@ function resetCourseState() {
   timerStarted     = false;
   timerStart       = 0;
   timerFinal       = 0;
-  startLineCrossed = false;
   startLineCooldown = 0;
   timerValueEl.textContent = '00.00';
   timerValueEl.className   = 'idle';
@@ -4247,7 +4394,6 @@ function resetCourseState() {
 
   buildPips(courseObstacles.length);
   buildPathLines();
-  showPB(currentLevel);
   beaconObstacleIndex = -1;
   beaconTime = 0;
   stopAutopilot();
@@ -4256,8 +4402,8 @@ function resetCourseState() {
 }
 
 function startLevel(levelIndex) {
-  currentRunNumber++; // new random course every run
-  currentLevel = 0;   // always 0 — single-level system
+  currentRunNumber++;
+  currentLevel = 0;
   levelIndValue.textContent = String(currentRunNumber);
   hideLevelOverlay();
   buildLevel(0);
@@ -4348,15 +4494,108 @@ function startGame() {
   }
   tick();
 })();
+// ── Blob shadow under dog ─────────────────────
+const blobShadowMat = new THREE.MeshBasicMaterial({
+  color: 0x000000, transparent: true, opacity: 0.28,
+  depthWrite: false,
+});
+const blobShadow = new THREE.Mesh(new THREE.CircleGeometry(0.55, 16), blobShadowMat);
+blobShadow.rotation.x = -Math.PI / 2;
+blobShadow.position.y = 0.03;
+scene.add(blobShadow);
+
+// ── Minimap ───────────────────────────────────
+const minimapCanvas = document.createElement('canvas');
+minimapCanvas.width  = 180;
+minimapCanvas.height = 180;
+minimapCanvas.id     = 'minimap';
+Object.assign(minimapCanvas.style, {
+  position: 'fixed', bottom: '16px', left: '16px',
+  width: '130px', height: '130px',
+  borderRadius: '8px',
+  border: '1.5px solid rgba(212,160,23,0.5)',
+  background: 'rgba(0,0,0,0.55)',
+  backdropFilter: 'blur(8px)',
+  zIndex: '50',
+  pointerEvents: 'none',
+});
+document.body.appendChild(minimapCanvas);
+const mmCtx = minimapCanvas.getContext('2d');
+
+function updateMinimap() {
+  if (!courseObstacles.length) return;
+  const W = minimapCanvas.width, H = minimapCanvas.height;
+  mmCtx.clearRect(0, 0, W, H);
+
+  // Find bounds of all obstacles + dog
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  courseObstacles.forEach(o => {
+    const en = getObsEntry(o), ex = getObsExit(o);
+    [en, ex].forEach(p => {
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+      minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z);
+    });
+  });
+  minX -= 8; maxX += 8; minZ -= 8; maxZ += 8;
+  const scX = W / (maxX - minX);
+  const scZ = H / (maxZ - minZ);
+  const sc  = Math.min(scX, scZ) * 0.88;
+  const offX = W/2 - ((minX + maxX)/2) * sc;
+  const offZ = H/2 - ((minZ + maxZ)/2) * sc;
+
+  const wx = x => W - (x * sc + offX);
+  const wz = z => H - (z * sc + offZ);
+
+  // Draw path line
+  if (guideWaypoints.length > 1) {
+    mmCtx.beginPath();
+    mmCtx.moveTo(wx(guideWaypoints[0].x), wz(guideWaypoints[0].z));
+    guideWaypoints.forEach(p => mmCtx.lineTo(wx(p.x), wz(p.z)));
+    mmCtx.strokeStyle = 'rgba(255,255,255,0.2)';
+    mmCtx.lineWidth = 1;
+    mmCtx.stroke();
+  }
+
+  // Draw obstacles
+  courseObstacles.forEach((o, idx) => {
+    const en = getObsEntry(o);
+    const done = o.cleared;
+    const next = idx === currentObstacle;
+    mmCtx.beginPath();
+    mmCtx.arc(wx(en.x), wz(en.z), next ? 5 : 3.5, 0, Math.PI*2);
+    mmCtx.fillStyle = done ? '#4caf50' : next ? '#ffcc00' : '#aaddff';
+    mmCtx.fill();
+    // Number
+    mmCtx.fillStyle = '#000';
+    mmCtx.font = `bold ${next ? 7 : 5.5}px Arial`;
+    mmCtx.textAlign = 'center';
+    mmCtx.textBaseline = 'middle';
+    mmCtx.fillText(String(idx+1), wx(en.x), wz(en.z));
+  });
+
+  // Dog dot
+  mmCtx.beginPath();
+  mmCtx.arc(wx(player.pos.x), wz(player.pos.z), 5, 0, Math.PI*2);
+  mmCtx.fillStyle = '#ff3333';
+  mmCtx.fill();
+  // Dog direction arrow
+  const arrowLen = 9;
+  mmCtx.beginPath();
+  mmCtx.moveTo(wx(player.pos.x), wz(player.pos.z));
+  mmCtx.lineTo(
+    wx(player.pos.x) + Math.sin(dogYaw) * arrowLen,
+    wz(player.pos.z) + Math.cos(dogYaw) * arrowLen
+  );
+  mmCtx.strokeStyle = '#ff6666';
+  mmCtx.lineWidth = 2;
+  mmCtx.stroke();
+}
+
 buildLevel(0);
 buildPips(courseObstacles.length);
 obsLastTrigger = new Array(courseObstacles.length).fill(0);
 resetPlayerToSpawn();
 animate();
-
-
-
-
 </script>
 </body>
 </html>
